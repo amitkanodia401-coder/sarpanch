@@ -30,6 +30,13 @@
       </a>
     </li>
     <li>
+      <a href="#votes" class="admin-nav-tab <%= activeTab === 'votes' ? 'active' : '' %>" data-tab="votes">
+        <i class="fa-solid fa-heart" style="color: #ef4444;"></i>
+        <span>समर्थन लॉग्स (IP व डिवाइस)</span>
+        <span class="badge" style="background: #ef4444;"><%= locals.supportLogs ? supportLogs.length : 0 %></span>
+      </a>
+    </li>
+    <li>
       <a href="#works" class="admin-nav-tab <%= activeTab === 'works' ? 'active' : '' %>" data-tab="works">
         <i class="fa-solid fa-helmet-safety"></i>
         <span>ग्राम विकास कार्य</span>
