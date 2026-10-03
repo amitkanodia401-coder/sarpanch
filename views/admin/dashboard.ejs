@@ -386,6 +386,7 @@
                       <span><i class="fa-solid fa-cake-candles"></i> <%= c.age %> वर्ष</span>
                       <span><i class="fa-solid fa-graduation-cap"></i> <%= c.education %></span>
                       <span><i class="fa-solid fa-location-dot"></i> <%= c.village %></span>
+                      <span><i class="fa-solid fa-map-pin" style="color: #ef4444;"></i> <strong>पता:</strong> <%= c.address || (c.village + (c.ward ? (', ' + c.ward) : '')) %></span>
                       <span><i class="fa-solid fa-phone"></i> <%= c.phone %></span>
                     </div>
                   </div>
@@ -430,7 +431,11 @@
               किस विज़िटर ने किस IP पते व डिवाइस से किस उम्मीदवार को समर्थन दिया है, उसका पूर्ण रीयल-टाइम रिकॉर्ड।
             </p>
           </div>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+            <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; background: #ecfdf5; color: #047857; padding: 6px 14px; border-radius: 20px; font-weight: 600; border: 1px solid #a7f3d0;">
+              <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
+              🟢 लाइव ऑटो-सिंक सक्रिय
+            </span>
             <a href="/api/export/votes.csv" class="btn btn-outline" style="background: white; border-color: #cbd5e1; font-size: 13.5px; font-weight: 600; padding: 10px 16px; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
               <i class="fa-solid fa-file-csv" style="color: #108e5e;"></i> CSV डाउनलोड करें
             </a>
@@ -985,7 +990,7 @@
           </div>
 
           <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
-            <table class="admin-table" style="margin: 0; width: 100%;">
+            <table class="admin-table" id="visitorLogsTable" style="margin: 0; width: 100%;">
               <thead style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">
                 <tr>
                   <th style="padding: 12px 18px; font-size: 12.5px; font-weight: 700;">#</th>
@@ -1231,6 +1236,7 @@
               <span id="modalCandEdu"></span>
               <span id="modalCandVillage"></span>
               <span id="modalCandPhone"></span>
+                <span id="modalCandAddress" style="display: block; width: 100%; margin-top: 6px; font-size: 13px; color: #1e293b; font-weight: 600;"><i class="fa-solid fa-map-location-dot" style="color: #108e5e; margin-right: 6px;"></i></span>
             </div>
           </div>
         </div>
@@ -1652,15 +1658,14 @@
             <label>स्लोगन</label>
             <input type="text" name="slogan" class="form-control" placeholder="गाँव का विकास, सबका साथ">
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>उम्मीदवार की फोटो अपलोड करें 📁</label>
-              <input type="file" name="photoFile" class="form-control" accept="image/*">
-            </div>
-            <div class="form-group">
-              <label>या फोटो URL (वैकल्पिक)</label>
-              <input type="url" name="photoUrl" class="form-control" placeholder="https://images.unsplash.com/...">
-            </div>
+          <div class="form-group">
+            <label>पूरा पता (Address / वार्ड / गाँव) *</label>
+            <input type="text" name="address" class="form-control" placeholder="उदा. मकान नं. 24, वार्ड नं. 2, ग्राम काकोड़ा" required>
+          </div>
+          <div class="form-group">
+            <label>उम्मीदवार की फोटो अपलोड करें 📁</label>
+            <input type="file" name="photoFile" class="form-control" accept="image/*">
+            <small style="color: #64748b; font-size: 11.5px; display: block; margin-top: 4px;">फोटो डेटाबेस में सुरक्षित सेव होगी और कभी नहीं हटेगी।</small>
           </div>
           <div class="form-group">
             <label>परिचय (Bio)</label>
@@ -1741,14 +1746,32 @@
               <input type="number" id="editCandVotes" name="votes" class="form-control" min="0" style="font-weight: 700; color: #be123c;">
             </div>
           </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>नई फोटो अपलोड करें 📁</label>
-              <input type="file" name="photoFile" class="form-control" accept="image/*">
-            </div>
-            <div class="form-group">
-              <label>या फोटो URL</label>
-              <input type="url" id="editCandPhoto" name="photoUrl" class="form-control">
+          <div class="form-group">
+            <label>पूरा पता (Address / वार्ड / गाँव) *</label>
+            <input type="text" id="editCandAddress" name="address" class="form-control" placeholder="उदा. मकान नं. 24, वार्ड नं. 2, ग्राम काकोड़ा">
+          </div>
+          <!-- Hidden field to preserve existing photo in database -->
+          <input type="hidden" id="editCandExistingPhoto" name="existingPhoto" value="">
+          <div style="background: #f8fafc; padding: 14px 18px; border-radius: 12px; border: 1.5px solid #e2e8f0; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div style="position: relative;">
+                  <img id="editCandPhotoPreview" src="" alt="उम्मीदवार फोटो" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #108e5e; box-shadow: 0 2px 6px rgba(0,0,0,0.1); background: white;">
+                  <span style="position: absolute; bottom: 0; right: 0; background: #108e5e; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; border: 2px solid white;" title="सेव्ड फोटो">
+                    <i class="fa-solid fa-check"></i>
+                  </span>
+                </div>
+                <div>
+                  <div style="font-size: 13.5px; font-weight: 700; color: #1e293b;">डेटाबेस में सेव फोटो सुरक्षित है</div>
+                  <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">
+                    फोटो पहले से सुरक्षित है। यदि फोटो नहीं बदलनी है तो दोबारा अपलोड करने की कोई आवश्यकता नहीं है।
+                  </div>
+                </div>
+              </div>
+              <div style="flex: 1; min-width: 200px;">
+                <label style="font-size: 12.5px; font-weight: 600; color: #334155; margin-bottom: 4px; display: block;">फोटो बदलनी हो तो नई फाइल चुनें:</label>
+                <input type="file" id="editCandPhotoFile" name="photoFile" class="form-control" accept="image/*" style="font-size: 12.5px; padding: 6px 10px;">
+              </div>
             </div>
           </div>
           <div class="form-group">
@@ -1873,6 +1896,160 @@
       if (countElem) countElem.textContent = visible;
     }
   
+    
+    // Real-Time Live Polling for Website Visitors and Support Votes
+    let lastVoteCount = -1;
+    let lastVisitorCount = -1;
+
+    async function pollLiveLogs() {
+      try {
+        const res = await fetch('/api/admin/live-logs');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data || !data.success) return;
+
+        const vLogs = data.supportLogs || [];
+        const visLogs = data.visitorLogs || [];
+
+        // 1. Update Vote Logs if count changed
+        if (lastVoteCount !== -1 && vLogs.length !== lastVoteCount) {
+          renderLiveVoteTable(vLogs);
+          // Highlight badge in sidebar
+          const sidebarBadge = document.querySelector('.admin-nav-tab[data-tab="votes"] .badge');
+          if (sidebarBadge) sidebarBadge.textContent = vLogs.length;
+        }
+        lastVoteCount = vLogs.length;
+
+        // 2. Update Visitor Logs if count changed
+        if (lastVisitorCount !== -1 && visLogs.length !== lastVisitorCount) {
+          renderLiveVisitorTable(visLogs);
+        }
+        lastVisitorCount = visLogs.length;
+
+        // 3. Update candidate vote badges in UI
+        if (Array.isArray(data.candidates)) {
+          data.candidates.forEach(cand => {
+            const elList = document.querySelectorAll('.vote-num-' + cand.id);
+            elList.forEach(el => { el.textContent = cand.votes; });
+          });
+        }
+      } catch (err) {
+        // Silently retry on next tick
+      }
+    }
+
+    function renderLiveVoteTable(vLogs) {
+      const tbody = document.querySelector('#voteLogsTable tbody');
+      if (!tbody) return;
+      if (vLogs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 48px 20px; color: #94a3b8;"><i class="fa-solid fa-heart-crack" style="font-size: 36px; margin-bottom: 12px; color: #cbd5e1; display: block;"></i><div style="font-size: 15px; font-weight: 600; color: #64748b;">अभी तक कोई समर्थन रिकॉर्ड नहीं मिला है</div></td></tr>';
+        return;
+      }
+
+      let html = '';
+      vLogs.forEach((log, index) => {
+        html += `
+          <tr class="vote-log-row" data-candidate="${log.candidateName || ''}" data-ip="${log.ip || ''}" data-device="${log.device || ''}" data-browser="${log.browser || ''}">
+            <td style="padding: 14px 18px; font-size: 13px; color: #64748b; font-weight: 600;">${index + 1}</td>
+            <td style="padding: 14px 18px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <div style="width: 38px; height: 38px; border-radius: 50%; overflow: hidden; background: #f1f5f9; flex-shrink: 0; border: 1.5px solid #fed7aa;">
+                  ${log.candidatePhoto ? `<img src="${log.candidatePhoto}" alt="${log.candidateName}" style="width: 100%; height: 100%; object-fit: cover;">` : `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 14px;"><i class="fa-solid fa-user"></i></div>`}
+                </div>
+                <div>
+                  <div style="font-weight: 700; color: #0f172a; font-size: 14px;">${log.candidateName}</div>
+                  <div style="font-size: 11.5px; color: #ea580c; display: flex; align-items: center; gap: 4px;">
+                    <i class="fa-solid fa-check-to-slot"></i> चुनाव चिन्ह: ${log.candidateSymbol || 'सरपंच'}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td style="padding: 14px 18px;">
+              <span style="display: inline-flex; align-items: center; gap: 6px; font-family: monospace; font-size: 13px; background: #eff6ff; color: #1d4ed8; padding: 4px 10px; border-radius: 6px; border: 1px solid #bfdbfe; font-weight: 600;">
+                <i class="fa-solid fa-network-wired" style="font-size: 11px;"></i>
+                ${log.ip || '127.0.0.1'}
+              </span>
+            </td>
+            <td style="padding: 14px 18px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid ${log.isMobile ? 'fa-mobile-screen' : 'fa-laptop'}" style="color: ${log.isMobile ? '#108e5e' : '#3b82f6'}; font-size: 15px;"></i>
+                <div>
+                  <div style="font-weight: 600; color: #1e293b; font-size: 13px;">${log.device || 'Android / Desktop'}</div>
+                  <div style="font-size: 11px; color: #64748b;">${log.os || 'Unknown OS'}</div>
+                </div>
+              </div>
+            </td>
+            <td style="padding: 14px 18px;">
+              <div style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #334155;">
+                <i class="fa-brands fa-chrome" style="color: #f59e0b;"></i>
+                <span>${log.browser || 'Web Browser'}</span>
+              </div>
+            </td>
+            <td style="padding: 14px 18px;">
+              <span style="font-family: monospace; font-size: 11px; background: #f8fafc; color: #475569; padding: 3px 8px; border-radius: 4px; border: 1px solid #e2e8f0;" title="${log.deviceId}">
+                ${log.deviceId ? (log.deviceId.substring(0, 14) + '...') : 'N/A'}
+              </span>
+            </td>
+            <td style="padding: 14px 18px;">
+              <div style="font-size: 12.5px; color: #1e293b; font-weight: 500;">
+                <i class="fa-regular fa-clock" style="color: #64748b; margin-right: 4px;"></i>
+                ${log.formattedTime || log.timestamp}
+              </div>
+            </td>
+            <td style="padding: 14px 18px; text-align: center;">
+              <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; background: #f0fdf4; color: #166534; padding: 4px 10px; border-radius: 20px; font-weight: 600; border: 1px solid #bbf7d0;">
+                <i class="fa-solid fa-circle-check"></i> 1-डिवाइस लॉक
+              </span>
+            </td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+      if (typeof filterVoteLogs === 'function') filterVoteLogs();
+    }
+
+    function renderLiveVisitorTable(visLogs) {
+      const tbody = document.querySelector('#visitorLogsTable tbody');
+      if (!tbody) return;
+      if (visLogs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 32px 20px; color: #94a3b8;"><i class="fa-solid fa-users-viewfinder" style="font-size: 28px; margin-bottom: 8px; display: block; color: #cbd5e1;"></i>अभी कोई विज़िटर डेटा उपलब्ध नहीं है।</td></tr>';
+        return;
+      }
+
+      let html = '';
+      visLogs.slice(0, 50).forEach((v, idx) => {
+        html += `
+          <tr>
+            <td style="padding: 12px 18px; font-size: 12.5px; color: #64748b; font-weight: 600;">${idx + 1}</td>
+            <td style="padding: 12px 18px;">
+              <span style="font-family: monospace; font-size: 12.5px; background: #eff6ff; color: #1e40af; padding: 3px 8px; border-radius: 4px; border: 1px solid #bfdbfe; font-weight: 600;">
+                ${v.ip || '127.0.0.1'}
+              </span>
+            </td>
+            <td style="padding: 12px 18px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid ${v.isMobile ? 'fa-mobile-screen' : 'fa-desktop'}" style="color: ${v.isMobile ? '#108e5e' : '#3b82f6'};"></i>
+                <div>
+                  <div style="font-weight: 600; font-size: 12.5px; color: #1e293b;">${v.device || 'Android / PC'}</div>
+                  <div style="font-size: 11px; color: #64748b;">${v.os || 'OS'}</div>
+                </div>
+              </div>
+            </td>
+            <td style="padding: 12px 18px; font-size: 12.5px; color: #334155;">${v.browser || 'Browser'}</td>
+            <td style="padding: 12px 18px;">
+              <span style="font-family: monospace; font-size: 12px; background: #f1f5f9; color: #334155; padding: 2px 6px; border-radius: 4px;">${v.path || '/'}</span>
+            </td>
+            <td style="padding: 12px 18px; font-size: 12.5px; font-weight: 700; color: #108e5e;">${v.hits || 1} बार</td>
+            <td style="padding: 12px 18px; font-size: 12px; color: #475569;">${v.formattedTime || v.lastSeen}</td>
+          </tr>
+        `;
+      });
+      tbody.innerHTML = html;
+    }
+
+    // Start auto-polling every 4 seconds
+    setInterval(pollLiveLogs, 4000);
+
     // Unified SPA Tab Switcher inside single Admin URL
     function switchTab(tabName) {
       document.querySelectorAll('.admin-nav-tab').forEach(t => t.classList.remove('active'));
@@ -1923,7 +2100,13 @@
       }
       
       // Toast for saved state
-      if (urlParams.get('saved') === 'gram_sabha') {
+      if (urlParams.get('saved') === 'candidate') {
+        if (typeof showToast === 'function') {
+          showToast('👤 उम्मीदवार सूची व प्रोफाइल सफलतापूर्वक अपडेट हो गई!');
+        } else {
+          alert('उम्मीदवार प्रोफाइल सफलतापूर्वक अपडेट हो गई!');
+        }
+      } else if (urlParams.get('saved') === 'gram_sabha') {
         if (typeof showToast === 'function') {
           showToast('🏛️ आगामी ग्राम सभा बैठक सूचना सफलतापूर्वक अपडेट हो गई!');
         } else {

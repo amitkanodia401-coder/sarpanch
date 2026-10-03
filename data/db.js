@@ -200,6 +200,11 @@ async function initDb() {
     );
   `);
 
+  // Migrate candidates table columns if not present
+  try {
+    sqlDb.run('ALTER TABLE candidates ADD COLUMN address TEXT;');
+  } catch (e) {}
+
   // Migrate works table columns if not present
   const extraWorkCols = [
     'workCode TEXT',
@@ -229,8 +234,8 @@ async function initDb() {
       // Seed Candidates
       if (Array.isArray(seedData.candidates)) {
         const stmt = sqlDb.prepare(`
-          INSERT INTO candidates (id, name, party, partyBadge, slogan, age, education, educationDetails, village, phone, ward, photo, symbol, votes, bio, achievements, promises)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          INSERT INTO candidates (id, name, party, partyBadge, slogan, age, education, educationDetails, address, village, phone, ward, photo, symbol, votes, bio, achievements, promises)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `);
         seedData.candidates.forEach(c => {
           stmt.run([
@@ -313,6 +318,7 @@ function formatCandidateRow(row) {
   if (!row) return null;
   return {
     ...row,
+    address: row.address || (row.village ? (row.village + (row.ward ? (', ' + row.ward) : '')) : ''),
     achievements: safeJsonParse(row.achievements, []),
     promises: safeJsonParse(row.promises, [])
   };
@@ -362,6 +368,7 @@ function addCandidate(candidate) {
     age: Number(candidate.age) || 35,
     education: candidate.education || '',
     educationDetails: candidate.educationDetails || candidate.education || '',
+    address: candidate.address || candidate.village || '',
     village: candidate.village || villageName,
     phone: candidate.phone || '',
     ward: candidate.ward || 'वार्ड 1',
@@ -380,7 +387,7 @@ function addCandidate(candidate) {
 
   stmt.run([
     newCand.id, newCand.name, newCand.party, newCand.partyBadge, newCand.slogan,
-    newCand.age, newCand.education, newCand.educationDetails, newCand.village,
+    newCand.age, newCand.education, newCand.educationDetails, newCand.address, newCand.village,
     newCand.phone, newCand.ward, newCand.photo, newCand.symbol, newCand.votes,
     newCand.bio, newCand.achievements, newCand.promises
   ]);
@@ -413,6 +420,7 @@ function updateCandidate(id, updateData) {
     promises = updateData.promises;
   }
 
+  const address = updateData.address !== undefined ? updateData.address : (current.address || current.village || '');
   const updated = {
     name: updateData.name || current.name,
     party: updateData.party || current.party,
@@ -421,6 +429,7 @@ function updateCandidate(id, updateData) {
     age,
     education: updateData.education !== undefined ? updateData.education : current.education,
     educationDetails: updateData.educationDetails !== undefined ? updateData.educationDetails : current.educationDetails,
+    address,
     village: updateData.village !== undefined ? updateData.village : current.village,
     phone: updateData.phone !== undefined ? updateData.phone : current.phone,
     ward: updateData.ward !== undefined ? updateData.ward : current.ward,
@@ -434,14 +443,14 @@ function updateCandidate(id, updateData) {
 
   const stmt = sqlDb.prepare(`
     UPDATE candidates SET
-      name=?, party=?, partyBadge=?, slogan=?, age=?, education=?, educationDetails=?,
+      name=?, party=?, partyBadge=?, slogan=?, age=?, education=?, educationDetails=?, address=?,
       village=?, phone=?, ward=?, photo=?, symbol=?, votes=?, bio=?, achievements=?, promises=?
     WHERE id=?
   `);
 
   stmt.run([
     updated.name, updated.party, updated.partyBadge, updated.slogan, updated.age,
-    updated.education, updated.educationDetails, updated.village, updated.phone,
+    updated.education, updated.educationDetails, updated.address, updated.village, updated.phone,
     updated.ward, updated.photo, updated.symbol, updated.votes, updated.bio,
     updated.achievements, updated.promises, String(id)
   ]);

@@ -138,7 +138,7 @@
       <div id="tab-contact" class="tab-pane">
         <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 14px;">कार्यालय एवं संपर्क विवरण</h3>
         <div style="background: #f8fafc; border-radius: 10px; padding: 20px; border: 1px solid #e2e8f0; max-width: 600px;">
-          <p style="margin-bottom: 10px;"><strong>📍 पता:</strong> मकान संख्या 42, <%= candidate.village %>, वार्ड <%= candidate.ward %></p>
+          <p style="margin-bottom: 10px;"><strong>📍 स्थायी पता:</strong> <%= candidate.address || ('मकान संख्या 42, ' + candidate.village + ', ' + candidate.ward) %></p>
           <p style="margin-bottom: 10px;"><strong>📞 फोन / व्हाट्सएप:</strong> <%= candidate.phone %></p>
           <p style="margin-bottom: 10px;"><strong>⏰ जनसुनवाई समय:</strong> प्रातः 08:00 से 11:00 बजे (प्रतिदिन)</p>
           <p><strong>✉️ ईमेल:</strong> <%= candidate.id %>@meragaon.gov.in</p>

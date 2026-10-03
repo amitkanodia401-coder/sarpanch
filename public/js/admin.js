@@ -140,7 +140,24 @@ function editCandidate(candJson) {
   document.getElementById('editCandPhone').value = cand.phone || '';
   document.getElementById('editCandEducation').value = cand.education || '';
   document.getElementById('editCandBio').value = cand.bio || '';
-  document.getElementById('editCandPhoto').value = cand.photo || '';
+
+  // Address (स्थायी पता)
+  const addrEl = document.getElementById('editCandAddress');
+  if (addrEl) addrEl.value = cand.address || (cand.village ? (cand.village + (cand.ward ? (', ' + cand.ward) : '')) : '');
+
+  // Photo retention & preview
+  const exPhotoEl = document.getElementById('editCandExistingPhoto');
+  if (exPhotoEl) exPhotoEl.value = cand.photo || '';
+
+  const previewEl = document.getElementById('editCandPhotoPreview');
+  if (previewEl) previewEl.src = cand.photo || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=360&h=360&fit=crop&crop=face';
+
+  const fileEl = document.getElementById('editCandPhotoFile');
+  if (fileEl) fileEl.value = '';
+
+  const oldPhotoEl = document.getElementById('editCandPhoto');
+  if (oldPhotoEl) oldPhotoEl.value = cand.photo || '';
+
   document.getElementById('editCandAchievements').value = Array.isArray(cand.achievements) ? cand.achievements.join('\n') : (cand.achievements || '');
   document.getElementById('editCandPromises').value = Array.isArray(cand.promises) ? cand.promises.join('\n') : (cand.promises || '');
   

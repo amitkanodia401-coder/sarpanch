@@ -338,23 +338,86 @@ async function saveDeviceVote(deviceId, candidateId, ip) {
   }
 }
 
+// Sync full candidate profiles (with address & photo) to Supabase permanently
+async function syncCandidatesToSupabase() {
+  if (!supabase) return;
+  try {
+    const allCands = db.getCandidates();
+    // 1. Save full candidate data array (including address, custom fields, and photos) to settings table
+    await supabase.from('settings').upsert({
+      key: 'candidates_data',
+      value: JSON.stringify(allCands)
+    });
+    // 2. Also upsert compatible columns to candidates table
+    for (const c of allCands) {
+      try {
+        await supabase.from('candidates').upsert({
+          id: c.id,
+          name: c.name,
+          party: c.party,
+          partybadge: c.partyBadge || c.partybadge || 'IND',
+          slogan: c.slogan || '',
+          age: Number(c.age) || 35,
+          education: c.education || '',
+          educationdetails: c.educationDetails || c.educationdetails || '',
+          village: c.village || '',
+          phone: c.phone || '',
+          ward: c.ward || '',
+          photo: c.photo || '',
+          symbol: c.symbol || 'कलम',
+          votes: Number(c.votes) || 0,
+          bio: c.bio || '',
+          achievements: typeof c.achievements === 'string' ? c.achievements : JSON.stringify(c.achievements || []),
+          promises: typeof c.promises === 'string' ? c.promises : JSON.stringify(c.promises || [])
+        });
+      } catch (e) {}
+    }
+  } catch (err) {
+    console.warn('Sync candidates to Supabase error:', err.message);
+  }
+}
+
 // Fetch live candidates with real-time vote count from Supabase database
 async function getCandidatesWithLiveVotes() {
-  const localCandidates = db.getCandidates();
+  let candidatesList = db.getCandidates();
   if (supabase) {
     try {
-      const { data, error } = await supabase.from('candidates').select('id, votes');
-      if (!error && Array.isArray(data) && data.length > 0) {
+      // 1. Check if Supabase settings has candidates_data
+      const { data: setData } = await supabase.from('settings').select('value').eq('key', 'candidates_data').single();
+      if (setData && setData.value) {
+        try {
+          const parsed = JSON.parse(setData.value);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            candidatesList = parsed;
+          }
+        } catch (e) {}
+      } else {
+        // Seed candidates_data into settings if not present
+        await syncCandidatesToSupabase();
+      }
+
+      // 2. Overlay live votes from Supabase candidates table
+      const { data: candVotes } = await supabase.from('candidates').select('id, votes');
+      if (Array.isArray(candVotes) && candVotes.length > 0) {
         const voteMap = {};
-        data.forEach(c => { voteMap[c.id] = c.votes || 0; });
-        return localCandidates.map(c => ({
+        candVotes.forEach(c => { voteMap[c.id] = c.votes || 0; });
+        candidatesList = candidatesList.map(c => ({
           ...c,
           votes: (typeof voteMap[c.id] === 'number') ? voteMap[c.id] : (c.votes || 0)
         }));
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Error fetching candidates from Supabase:', e.message);
+    }
   }
-  return localCandidates;
+  return (candidatesList || []).map(c => ({
+    ...c,
+    party: c.party || 'निर्दलीय',
+    partyBadge: c.partyBadge || c.partybadge || 'IND',
+    address: c.address || (c.village ? (c.village + (c.ward ? (', ' + c.ward) : '')) : ''),
+    photo: c.photo || '',
+    votes: Number(c.votes) || 0
+  }));
 }
 
 // Global session & visitor state via cookies
@@ -816,43 +879,93 @@ app.post('/api/works/:id/delete', requireAdmin, (req, res) => {
   res.redirect('/admin?tab=works');
 });
 
+
+// Real-time live activity endpoint for Admin Panel (Device & IP visitor logs + votes)
+app.get('/api/admin/live-logs', requireAdmin, async (req, res) => {
+  try {
+    const candidates = await getCandidatesWithLiveVotes();
+    res.json({
+      success: true,
+      supportLogs: supportLogsCache || [],
+      visitorLogs: visitorLogsCache || [],
+      candidates,
+      stats: db.getStats()
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Candidate CRUD
-app.post('/api/candidates', requireAdmin, uploadCandidate.single('photoFile'), (req, res) => {
-  if (req.file) {
-    req.body.photo = '/uploads/candidates/' + req.file.filename;
-  } else if (req.body.photoUrl && req.body.photoUrl.trim()) {
-    req.body.photo = req.body.photoUrl.trim();
-  } else if (req.body.photo && req.body.photo.trim()) {
-    req.body.photo = req.body.photo.trim();
+app.post('/api/candidates', requireAdmin, uploadCandidate.single('photoFile'), async (req, res) => {
+  try {
+    if (req.file) {
+      try {
+        const fileBuf = fs.readFileSync(req.file.path);
+        req.body.photo = 'data:' + (req.file.mimetype || 'image/jpeg') + ';base64,' + fileBuf.toString('base64');
+      } catch (e) {
+        req.body.photo = '/uploads/candidates/' + req.file.filename;
+      }
+    } else if (req.body.photo && req.body.photo.trim()) {
+      req.body.photo = req.body.photo.trim();
+    }
+    const cand = db.addCandidate(req.body);
+    await syncCandidatesToSupabase();
+    if (req.headers['content-type']?.includes('application/json')) {
+      return res.json({ success: true, candidate: cand });
+    }
+    res.redirect('/admin?tab=candidates&saved=candidate');
+  } catch (err) {
+    console.error('Add candidate error:', err);
+    res.redirect('/admin?tab=candidates&error=' + encodeURIComponent(err.message));
   }
-  const cand = db.addCandidate(req.body);
-  if (req.headers['content-type']?.includes('application/json')) {
-    return res.json({ success: true, candidate: cand });
-  }
-  res.redirect('/admin?tab=candidates');
 });
 
-app.post('/api/candidates/:id/edit', requireAdmin, uploadCandidate.single('photoFile'), (req, res) => {
-  if (req.file) {
-    req.body.photo = '/uploads/candidates/' + req.file.filename;
-  } else if (req.body.photoUrl && req.body.photoUrl.trim()) {
-    req.body.photo = req.body.photoUrl.trim();
-  } else if (req.body.photo && req.body.photo.trim()) {
-    req.body.photo = req.body.photo.trim();
+app.post('/api/candidates/:id/edit', requireAdmin, uploadCandidate.single('photoFile'), async (req, res) => {
+  try {
+    const currentCand = db.getCandidateById(req.params.id) || {};
+    if (req.file) {
+      try {
+        const fileBuf = fs.readFileSync(req.file.path);
+        req.body.photo = 'data:' + (req.file.mimetype || 'image/jpeg') + ';base64,' + fileBuf.toString('base64');
+      } catch (e) {
+        req.body.photo = '/uploads/candidates/' + req.file.filename;
+      }
+    } else if (req.body.existingPhoto && req.body.existingPhoto.trim()) {
+      req.body.photo = req.body.existingPhoto.trim();
+    } else {
+      req.body.photo = currentCand.photo || '';
+    }
+
+    if (req.body.address === undefined && currentCand.address) {
+      req.body.address = currentCand.address;
+    }
+
+    const updated = db.updateCandidate(req.params.id, req.body);
+    await syncCandidatesToSupabase();
+
+    if (req.headers['content-type']?.includes('application/json')) {
+      return res.json({ success: !!updated, candidate: updated });
+    }
+    res.redirect('/admin?tab=candidates&saved=candidate');
+  } catch (err) {
+    console.error('Edit candidate error:', err);
+    res.redirect('/admin?tab=candidates&error=' + encodeURIComponent(err.message));
   }
-  const updated = db.updateCandidate(req.params.id, req.body);
-  if (req.headers['content-type']?.includes('application/json')) {
-    return res.json({ success: !!updated, candidate: updated });
-  }
-  res.redirect('/admin?tab=candidates');
 });
 
-app.post('/api/candidates/:id/delete', requireAdmin, (req, res) => {
-  const deleted = db.deleteCandidate(req.params.id);
-  if (req.headers['content-type']?.includes('application/json')) {
-    return res.json({ success: deleted });
+app.post('/api/candidates/:id/delete', requireAdmin, async (req, res) => {
+  try {
+    const deleted = db.deleteCandidate(req.params.id);
+    await syncCandidatesToSupabase();
+    if (req.headers['content-type']?.includes('application/json')) {
+      return res.json({ success: deleted });
+    }
+    res.redirect('/admin?tab=candidates');
+  } catch (err) {
+    console.error('Delete candidate error:', err);
+    res.redirect('/admin?tab=candidates');
   }
-  res.redirect('/admin?tab=candidates');
 });
 
 // Complaint Status Update

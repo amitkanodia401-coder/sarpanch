@@ -69,7 +69,7 @@
               <div class="candidate-card-badges">
                 <span><i class="fa-solid fa-cake-candles"></i> <%= c.age %> वर्ष</span>
                 <span><i class="fa-solid fa-graduation-cap"></i> <%= c.education %></span>
-                <span><i class="fa-solid fa-location-dot"></i> <%= c.village %></span>
+                <span><i class="fa-solid fa-map-pin"></i> <%= c.address || (c.village + (c.ward ? (', ' + c.ward) : '')) %></span>
                 <span><i class="fa-solid fa-heart" style="color: #e11d48;"></i> <strong class="vote-num-<%= c.id %>" style="color: #e11d48;"><%= c.votes %></strong> समर्थक</span>
               </div>
             </div>
