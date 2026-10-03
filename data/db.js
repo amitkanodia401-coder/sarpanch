@@ -73,21 +73,35 @@ async function initDb() {
   if (initDbPromise) return initDbPromise;
 
   initDbPromise = (async () => {
-    // Custom wasm locator for bundled environments like Vercel
-    const SQL = await initSqlJs({
-      locateFile: file => {
+    // Load wasmBinary directly as buffer for Vercel/Serverless
+    let wasmBinary = null;
+    const wasmCandidates = [
+      path.join(__dirname, 'sql-wasm.wasm'),
+      path.join(process.cwd(), 'data', 'sql-wasm.wasm')
+    ];
+    for (const wPath of wasmCandidates) {
+      if (fs.existsSync(wPath)) {
+        try {
+          wasmBinary = fs.readFileSync(wPath);
+          break;
+        } catch (e) {}
+      }
+    }
+
+    const sqlConfig = {};
+    if (wasmBinary) {
+      sqlConfig.wasmBinary = wasmBinary;
+    } else {
+      sqlConfig.locateFile = file => {
         const localWasm = path.join(__dirname, file);
         if (fs.existsSync(localWasm)) return localWasm;
         const cwdWasm = path.join(process.cwd(), 'data', file);
         if (fs.existsSync(cwdWasm)) return cwdWasm;
-        try {
-          const sqlJsDist = path.dirname(require.resolve('sql.js'));
-          const wasmPath = path.join(sqlJsDist, file);
-          if (fs.existsSync(wasmPath)) return wasmPath;
-        } catch (e) {}
         return file;
-      }
-    });
+      };
+    }
+
+    const SQL = await initSqlJs(sqlConfig);
 
     // If on Vercel, copy the bundled DB to /tmp if it doesn't already exist
     if (isVercel && !fs.existsSync(dbFilePath) && fs.existsSync(bundledDbPath)) {
