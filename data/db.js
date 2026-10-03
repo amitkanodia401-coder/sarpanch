@@ -1,11 +1,30 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const initSqlJs = require('sql.js');
 
-const dbFilePath = path.resolve(process.env.DB_FILE || path.join(__dirname, 'sarpanch.sqlite'));
-const jsonSeedPath = path.join(__dirname, 'db.json');
+const isVercel = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+
+// Bundled paths in deployment package
+const bundledDbPath = path.resolve(
+  process.env.DB_FILE ||
+  (fs.existsSync(path.join(process.cwd(), 'data', 'sarpanch.sqlite'))
+    ? path.join(process.cwd(), 'data', 'sarpanch.sqlite')
+    : path.join(__dirname, 'sarpanch.sqlite'))
+);
+
+const jsonSeedPath = fs.existsSync(path.join(process.cwd(), 'data', 'db.json'))
+  ? path.join(process.cwd(), 'data', 'db.json')
+  : path.join(__dirname, 'db.json');
+
+// In serverless environments like Vercel, the app directory is read-only.
+// We read from the bundled DB or copy to /tmp for read/write.
+const dbFilePath = isVercel
+  ? path.join(os.tmpdir(), 'sarpanch.sqlite')
+  : bundledDbPath;
 
 let sqlDb = null;
+let initDbPromise = null;
 
 // Save SQLite database binary buffer to disk
 function saveSqlToFile() {
@@ -20,7 +39,7 @@ function saveSqlToFile() {
     fs.writeFileSync(dbFilePath, buffer);
     return true;
   } catch (err) {
-    console.error('Error saving SQLite database file:', err);
+    console.warn('Warning: Could not save SQLite database file (expected in read-only environments):', err.message);
     return false;
   }
 }
@@ -51,20 +70,57 @@ function safeJsonParse(str, fallback) {
 // Initialize SQLite database
 async function initDb() {
   if (sqlDb) return sqlDb;
+  if (initDbPromise) return initDbPromise;
 
-  const SQL = await initSqlJs();
+  initDbPromise = (async () => {
+    // Custom wasm locator for bundled environments like Vercel
+    const SQL = await initSqlJs({
+      locateFile: file => {
+        try {
+          const sqlJsDist = path.dirname(require.resolve('sql.js'));
+          const wasmPath = path.join(sqlJsDist, file);
+          if (fs.existsSync(wasmPath)) return wasmPath;
+        } catch (e) {}
+        return file;
+      }
+    });
 
-  if (fs.existsSync(dbFilePath)) {
-    try {
-      const fileBuffer = fs.readFileSync(dbFilePath);
-      sqlDb = new SQL.Database(fileBuffer);
-    } catch (err) {
-      console.warn('Could not read existing SQLite file, creating new one:', err.message);
+    // If on Vercel, copy the bundled DB to /tmp if it doesn't already exist
+    if (isVercel && !fs.existsSync(dbFilePath) && fs.existsSync(bundledDbPath)) {
+      try {
+        fs.copyFileSync(bundledDbPath, dbFilePath);
+      } catch (copyErr) {
+        console.warn('Failed to copy bundled SQLite to tmpdir:', copyErr.message);
+      }
+    }
+
+    if (fs.existsSync(dbFilePath)) {
+      try {
+        const fileBuffer = fs.readFileSync(dbFilePath);
+        sqlDb = new SQL.Database(fileBuffer);
+      } catch (err) {
+        console.warn('Could not read existing SQLite file, creating new one:', err.message);
+        if (fs.existsSync(bundledDbPath)) {
+          try {
+            const fallbackBuf = fs.readFileSync(bundledDbPath);
+            sqlDb = new SQL.Database(fallbackBuf);
+          } catch {
+            sqlDb = new SQL.Database();
+          }
+        } else {
+          sqlDb = new SQL.Database();
+        }
+      }
+    } else if (fs.existsSync(bundledDbPath)) {
+      try {
+        const fileBuffer = fs.readFileSync(bundledDbPath);
+        sqlDb = new SQL.Database(fileBuffer);
+      } catch (err) {
+        sqlDb = new SQL.Database();
+      }
+    } else {
       sqlDb = new SQL.Database();
     }
-  } else {
-    sqlDb = new SQL.Database();
-  }
 
   // Create SQL Tables
   sqlDb.run(`
@@ -219,7 +275,10 @@ async function initDb() {
     saveSqlToFile();
   }
 
-  return sqlDb;
+    return sqlDb;
+  })();
+
+  return initDbPromise;
 }
 
 // Ensure database is initialized before any query

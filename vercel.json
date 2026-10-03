@@ -3,7 +3,25 @@
   "rewrites": [
     {
       "source": "/(.*)",
-      "destination": "/server.js"
+      "destination": "/api/index"
     }
-  ]
+  ],
+  "functions": {
+    "api/index.js": {
+      "includeFiles": [
+        "views/**",
+        "data/**",
+        "public/**",
+        "node_modules/sql.js/dist/**"
+      ]
+    },
+    "server.js": {
+      "includeFiles": [
+        "views/**",
+        "data/**",
+        "public/**",
+        "node_modules/sql.js/dist/**"
+      ]
+    }
+  }
 }

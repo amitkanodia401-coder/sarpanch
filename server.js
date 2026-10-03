@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const multer = require('multer');
@@ -7,12 +8,35 @@ const db = require('./data/db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const isVercel = !!(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const projectRoot = process.cwd();
+
+// Resolve view and static paths reliably across local and serverless deployments
+const viewsPath = fs.existsSync(path.join(projectRoot, 'views'))
+  ? path.join(projectRoot, 'views')
+  : path.join(__dirname, 'views');
+const publicPath = fs.existsSync(path.join(projectRoot, 'public'))
+  ? path.join(projectRoot, 'public')
+  : path.join(__dirname, 'public');
 
 // Configure storage for candidates and works photo uploads
+// On Vercel / Lambda, write uploads to /tmp to prevent read-only filesystem errors
+const uploadBaseDir = isVercel
+  ? path.join(os.tmpdir(), 'uploads')
+  : path.join(publicPath, 'uploads');
+
+const candidateUploadDir = path.join(uploadBaseDir, 'candidates');
+const workUploadDir = path.join(uploadBaseDir, 'works');
+
+try {
+  if (!fs.existsSync(candidateUploadDir)) fs.mkdirSync(candidateUploadDir, { recursive: true });
+  if (!fs.existsSync(workUploadDir)) fs.mkdirSync(workUploadDir, { recursive: true });
+} catch (e) {
+  console.warn('Could not create upload directories:', e.message);
+}
+
 const candidateStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, 'public/uploads/candidates'));
-  },
+  destination: (req, file, cb) => cb(null, candidateUploadDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname) || '.jpg';
     cb(null, 'cand-' + Date.now() + ext);
@@ -21,9 +45,7 @@ const candidateStorage = multer.diskStorage({
 const uploadCandidate = multer({ storage: candidateStorage });
 
 const workStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, 'public/uploads/works'));
-  },
+  destination: (req, file, cb) => cb(null, workUploadDir),
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname) || '.jpg';
     cb(null, 'work-' + Date.now() + ext);
@@ -34,19 +56,49 @@ const uploadWork = multer({ storage: workStorage });
 // Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(publicPath));
+if (isVercel) {
+  app.use('/uploads', express.static(uploadBaseDir));
+}
 
 // Set View Engine
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', viewsPath);
+
+// Database initialization middleware - ensures SQL database is ready before any request is processed
+let dbInitPromise = null;
+app.use(async (req, res, next) => {
+  try {
+    if (!dbInitPromise) {
+      dbInitPromise = db.initDb();
+    }
+    await dbInitPromise;
+    next();
+  } catch (err) {
+    console.error('Database initialization failed:', err);
+    res.status(500).send(`
+      <div style="font-family: sans-serif; padding: 2rem; max-width: 600px; margin: 2rem auto; border: 1px solid #fee2e2; border-radius: 8px; background: #fff5f5;">
+        <h2 style="color: #991b1b; margin-top: 0;">500 - डेटाबेस लोड नहीं हो सका (Database Error)</h2>
+        <p style="color: #4b5563;">डेटाबेस प्रारंभ करने में समस्या आई है।</p>
+        <pre style="background: #f1f5f9; padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 13px; color: #1e293b;">${err.message || err}</pre>
+      </div>
+    `);
+  }
+});
 
 // Simple session simulator via cookies
 app.use((req, res, next) => {
   const cookieHeader = req.headers.cookie || '';
   req.isAdmin = cookieHeader.includes('admin_auth=true');
   res.locals.isAdmin = req.isAdmin;
-  res.locals.villageInfo = db.getVillageInfo();
-  res.locals.gramSabha = db.getGramSabha();
+  try {
+    res.locals.villageInfo = db.getVillageInfo();
+    res.locals.gramSabha = db.getGramSabha();
+  } catch (err) {
+    console.error('Error fetching global locals:', err);
+    res.locals.villageInfo = {};
+    res.locals.gramSabha = {};
+  }
   next();
 });
 
@@ -379,6 +431,24 @@ app.use((req, res) => {
   });
 });
 
+// Global Error Handler - catches any uncaught error to prevent Vercel 500 crashes
+app.use((err, req, res, next) => {
+  console.error('Unhandled server error:', err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  res.status(500).send(`
+    <div style="font-family: system-ui, sans-serif; padding: 2.5rem; max-width: 650px; margin: 3rem auto; border: 1px solid #fecaca; border-radius: 12px; background: #fff5f5; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+      <h2 style="color: #991b1b; margin-top: 0; font-size: 1.5rem;">500 - आंतरिक सर्वर त्रुटि (Server Error)</h2>
+      <p style="color: #4b5563; font-size: 1rem; line-height: 1.5;">पोर्टल लोड करने में कोई तकनीकी समस्या आई है।</p>
+      <pre style="background: #1e293b; color: #f8fafc; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 12px; line-height: 1.4;">${err.stack || err.message || err}</pre>
+      <div style="margin-top: 1.5rem;">
+        <a href="/" style="display: inline-block; background: #2563eb; color: #ffffff; text-decoration: none; padding: 0.6rem 1.2rem; border-radius: 6px; font-weight: 500;">मुख्य पृष्ठ पर वापस जाएँ (Back to Home)</a>
+      </div>
+    </div>
+  `);
+});
+
 // Helper to detect local network IPv4 address
 function getNetworkIp() {
   const nets = os.networkInterfaces();
@@ -417,6 +487,9 @@ async function startServer() {
   }
 }
 
-startServer();
+// Only start listening if NOT in a serverless environment (e.g. Vercel)
+if (!process.env.VERCEL && require.main === module) {
+  startServer();
+}
 
 module.exports = app;
