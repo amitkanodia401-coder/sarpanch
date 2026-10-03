@@ -122,14 +122,83 @@ function getClientIp(req) {
 const votedIps = new Set();
 let votesCache = { time: 0, data: null };
 
+// Device-level voter tracking (stored in Supabase settings table for cloud persistence)
+let deviceVotersCache = {};
+let isDeviceVotersLoaded = false;
+
+async function loadDeviceVoters() {
+  if (isDeviceVotersLoaded && Object.keys(deviceVotersCache).length > 0) return deviceVotersCache;
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('settings').select('value').eq('key', 'device_voters').single();
+      if (!error && data && data.value) {
+        deviceVotersCache = JSON.parse(data.value);
+        isDeviceVotersLoaded = true;
+        return deviceVotersCache;
+      }
+    } catch (e) {
+      console.warn('Could not load device_voters from Supabase:', e.message);
+    }
+  }
+  isDeviceVotersLoaded = true;
+  return deviceVotersCache;
+}
+
+async function saveDeviceVote(deviceId, candidateId, ip) {
+  await loadDeviceVoters();
+  deviceVotersCache[deviceId] = {
+    candidateId,
+    ip,
+    timestamp: new Date().toISOString()
+  };
+  if (supabase) {
+    try {
+      await supabase.from('settings').upsert({
+        key: 'device_voters',
+        value: JSON.stringify(deviceVotersCache)
+      });
+    } catch (e) {
+      console.warn('Could not persist device_voters to Supabase:', e.message);
+    }
+  }
+}
+
+// Fetch live candidates with real-time vote count from Supabase database
+async function getCandidatesWithLiveVotes() {
+  const localCandidates = db.getCandidates();
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('candidates').select('id, votes');
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const voteMap = {};
+        data.forEach(c => { voteMap[c.id] = c.votes || 0; });
+        return localCandidates.map(c => ({
+          ...c,
+          votes: (typeof voteMap[c.id] === 'number') ? voteMap[c.id] : (c.votes || 0)
+        }));
+      }
+    } catch (e) {}
+  }
+  return localCandidates;
+}
+
 // Global session & visitor state via cookies
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
   const cookies = parseCookies(req.headers.cookie || '');
   req.isAdmin = (cookies['admin_auth'] === 'true') || (req.headers.cookie || '').includes('admin_auth=true');
   res.locals.isAdmin = req.isAdmin;
 
   // Single-vote tracking: which candidate did this visitor support
   req.votedCandidate = cookies['sarpanch_voted'] || null;
+  req.deviceId = cookies['sarpanch_device_id'] || null;
+
+  // Check if this device has already voted
+  if (!req.votedCandidate && req.deviceId) {
+    const dMap = await loadDeviceVoters();
+    if (dMap[req.deviceId]) {
+      req.votedCandidate = dMap[req.deviceId].candidateId;
+    }
+  }
   res.locals.votedCandidate = req.votedCandidate;
 
   try {
@@ -159,9 +228,9 @@ function requireAdmin(req, res, next) {
 // PUBLIC ROUTES
 // ----------------------------------------------------
 
-// 1. Home Page (Public View)
-app.get('/', (req, res) => {
-  const candidates = db.getCandidates();
+// 1. Home Page (Public View with Real-time DB votes)
+app.get('/', async (req, res) => {
+  const candidates = await getCandidatesWithLiveVotes();
   const works = db.getWorks();
   const villageInfo = db.getVillageInfo();
   const duties = db.getDuties();
@@ -176,9 +245,9 @@ app.get('/', (req, res) => {
   });
 });
 
-// 2. Candidate List Page
-app.get('/candidates', (req, res) => {
-  const candidates = db.getCandidates();
+// 2. Candidate List Page (with Real-time DB votes)
+app.get('/candidates', async (req, res) => {
+  const candidates = await getCandidatesWithLiveVotes();
   res.render('candidates', {
     pageTitle: 'उम्मीदवार सूची | मेरा गाँव पोर्टल',
     activeNav: 'candidates',
@@ -186,13 +255,13 @@ app.get('/candidates', (req, res) => {
   });
 });
 
-// 3. Candidate Profile Page
-app.get('/candidate/:id', (req, res) => {
-  const candidate = db.getCandidateById(req.params.id);
+// 3. Candidate Profile Page (with Real-time DB votes)
+app.get('/candidate/:id', async (req, res) => {
+  const allCandidates = await getCandidatesWithLiveVotes();
+  const candidate = allCandidates.find(c => c.id === req.params.id) || db.getCandidateById(req.params.id);
   if (!candidate) {
     return res.status(404).render('404', { pageTitle: 'उम्मीदवार नहीं मिला', message: 'यह उम्मीदवार उपलब्ध नहीं है।' });
   }
-  const allCandidates = db.getCandidates();
   res.render('candidate-detail', {
     pageTitle: `${candidate.name} - उम्मीदवार प्रोफाइल`,
     activeNav: 'candidates',
@@ -319,38 +388,79 @@ app.get('/admin/settings', (req, res) => res.redirect('/admin?tab=settings'));
 // REST APIs (AJAX & Form submissions)
 // ----------------------------------------------------
 
-// Support / Vote pledge - STRICT ONE VOTE PER VISITOR + REAL-TIME SYNC
+// Check if current device has already voted (Supports incognito / cleared cookies via deviceId)
+app.get('/api/my-vote', async (req, res) => {
+  const cookies = parseCookies(req.headers.cookie || '');
+  const deviceId = req.query.deviceId || cookies['sarpanch_device_id'];
+  const dMap = await loadDeviceVoters();
+
+  if (deviceId && dMap[deviceId]) {
+    return res.json({ hasVoted: true, candidateId: dMap[deviceId].candidateId });
+  }
+  if (cookies['sarpanch_voted']) {
+    return res.json({ hasVoted: true, candidateId: cookies['sarpanch_voted'] });
+  }
+  return res.json({ hasVoted: false });
+});
+
+// Support / Vote pledge - STRICT ONE VOTE PER DEVICE + REAL-TIME DATABASE UPDATE
 app.post('/api/vote/:id', async (req, res) => {
   const candidateId = String(req.params.id);
   const cookies = parseCookies(req.headers.cookie || '');
-  const alreadyVotedCandidate = cookies['sarpanch_voted'];
+  const cookieVotedCandidate = cookies['sarpanch_voted'];
   const clientIp = getClientIp(req);
+  const deviceId = req.body?.deviceId || req.query?.deviceId || cookies['sarpanch_device_id'];
 
-  // 1. Strict check: If already voted, deny with 400
+  const dMap = await loadDeviceVoters();
+
+  // 1. Strict check: Has this DEVICE or COOKIE already voted?
+  let alreadyVotedCandidate = null;
+  if (deviceId && dMap[deviceId]) {
+    alreadyVotedCandidate = dMap[deviceId].candidateId;
+  } else if (cookieVotedCandidate) {
+    alreadyVotedCandidate = cookieVotedCandidate;
+  }
+
   if (alreadyVotedCandidate) {
     return res.status(400).json({
       success: false,
       alreadyVoted: true,
       votedCandidate: alreadyVotedCandidate,
-      message: 'आप पहले ही अपना समर्थन दर्ज कर चुके हैं! एक नागरिक केवल एक बार समर्थन दे सकता है।'
+      message: 'इस डिवाइस से पहले ही समर्थन दर्ज किया जा चुका है! एक डिवाइस से केवल एक ही समर्थन दिया जा सकता है।'
     });
   }
 
-  // 2. Increment in local SQLite / db.json
-  const updatedVotes = db.pledgeVote(candidateId);
-  if (updatedVotes === null) {
-    return res.status(404).json({ success: false, message: 'उम्मीदवार नहीं मिला' });
-  }
-
-  // 3. Sync to Supabase in real-time if configured
+  // 2. Direct database update in Supabase (Real-Time Source of Truth)
+  let currentVotes = 0;
   if (supabase) {
     try {
       const { data } = await supabase.from('candidates').select('votes').eq('id', candidateId).single();
-      const currentSupabaseVotes = (data && typeof data.votes === 'number') ? data.votes : (updatedVotes - 1);
-      await supabase.from('candidates').update({ votes: currentSupabaseVotes + 1 }).eq('id', candidateId);
+      currentVotes = (data && typeof data.votes === 'number') ? data.votes : 0;
     } catch (e) {
-      console.warn('Supabase vote sync error:', e.message);
+      console.warn('Supabase fetch error:', e.message);
     }
+  } else {
+    const c = db.getCandidateById(candidateId);
+    currentVotes = (c && c.votes) ? c.votes : 0;
+  }
+
+  const finalVotes = currentVotes + 1;
+
+  // Persist increment in Supabase Database
+  if (supabase) {
+    try {
+      await supabase.from('candidates').update({ votes: finalVotes }).eq('id', candidateId);
+    } catch (e) {
+      console.warn('Supabase update error:', e.message);
+    }
+  }
+
+  // Also update local SQLite / db.json
+  db.pledgeVote(candidateId);
+
+  // 3. Permanently lock this DEVICE in Supabase database
+  if (deviceId) {
+    await saveDeviceVote(deviceId, candidateId, clientIp);
   }
 
   if (clientIp) {
@@ -358,23 +468,24 @@ app.post('/api/vote/:id', async (req, res) => {
     votedIps.add(clientIp);
   }
 
-  // Clear cache for instant real-time poll update
+  // Clear in-memory cache for instant real-time poll update
   votesCache = { time: 0, data: null };
 
-  // 4. Set persistent 1-year cookie so browser permanently locks future voting
+  // Set persistent cookie on browser
   res.setHeader('Set-Cookie', [
-    `sarpanch_voted=${encodeURIComponent(candidateId)}; Path=/; Max-Age=31536000; SameSite=Lax`
+    `sarpanch_voted=${encodeURIComponent(candidateId)}; Path=/; Max-Age=31536000; SameSite=Lax`,
+    ...(deviceId ? [`sarpanch_device_id=${encodeURIComponent(deviceId)}; Path=/; Max-Age=31536000; SameSite=Lax`] : [])
   ]);
 
   return res.json({
     success: true,
     candidateId,
-    votes: updatedVotes,
-    message: 'समर्थन दर्ज करने के लिए धन्यवाद! आपका समर्थन सफलतापूर्वक दर्ज हो गया है।'
+    votes: finalVotes,
+    message: 'समर्थन दर्ज करने के लिए धन्यवाद! आपका समर्थन डेटाबेस में सफलतापूर्वक दर्ज हो गया है।'
   });
 });
 
-// Real-Time live votes polling endpoint (returns current vote counts for all candidates)
+// Real-Time live votes polling endpoint (returns current vote counts directly from DB)
 app.get('/api/votes', async (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   const now = Date.now();
@@ -412,11 +523,14 @@ app.post('/api/votes/reset', requireAdmin, async (req, res) => {
   if (supabase) {
     try {
       await supabase.from('candidates').update({ votes: 0 }).neq('id', '___none___');
+      await supabase.from('settings').upsert({ key: 'device_voters', value: JSON.stringify({}) });
     } catch (e) {
       console.error('Supabase reset votes error:', e);
     }
   }
 
+  deviceVotersCache = {};
+  isDeviceVotersLoaded = false;
   votesCache = { time: 0, data: null };
   votedIps.clear();
 

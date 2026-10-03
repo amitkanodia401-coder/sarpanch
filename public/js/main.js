@@ -110,6 +110,61 @@ function initWorksFilters() {
 // ----------------------------------------------------
 const VOTED_KEY = 'sarpanch_voted_candidate';
 
+// Deterministic Device Fingerprint (1 device = 1 vote strictly)
+function getDeviceFingerprint() {
+  try {
+    const saved = localStorage.getItem('sarpanch_device_id');
+    if (saved) return saved;
+
+    const nav = window.navigator || {};
+    const scr = window.screen || {};
+
+    const components = [
+      nav.userAgent || '',
+      nav.language || '',
+      (scr.width || 0) + 'x' + (scr.height || 0) + 'x' + (scr.colorDepth || 24),
+      new Date().getTimezoneOffset(),
+      nav.hardwareConcurrency || 4,
+      nav.deviceMemory || 4,
+      nav.platform || ''
+    ];
+
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width = 160;
+      canvas.height = 40;
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        ctx.textBaseline = 'top';
+        ctx.font = '14px Arial';
+        ctx.fillStyle = '#f60';
+        ctx.fillRect(100, 1, 50, 20);
+        ctx.fillStyle = '#069';
+        ctx.fillText('Sarpanch2026', 2, 10);
+        components.push(canvas.toDataURL());
+      }
+    } catch(e) {}
+
+    const str = components.join('###');
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash |= 0;
+    }
+
+    const deviceId = 'dev_' + Math.abs(hash).toString(16) + '_' + (scr.width * scr.height);
+    try {
+      localStorage.setItem('sarpanch_device_id', deviceId);
+      document.cookie = 'sarpanch_device_id=' + encodeURIComponent(deviceId) + '; path=/; max-age=31536000; SameSite=Lax';
+    } catch(e) {}
+    return deviceId;
+  } catch (err) {
+    const fallback = 'dev_' + Math.random().toString(36).substring(2, 15);
+    try { localStorage.setItem('sarpanch_device_id', fallback); } catch(e) {}
+    return fallback;
+  }
+}
+
 // Retrieve candidate ID that visitor supported (from localStorage or cookie)
 function getVotedCandidate() {
   try {
@@ -175,7 +230,7 @@ function applyVotedButtonStates(votedCandidateId) {
       btn.innerHTML = '<i class="fa-solid fa-lock" style="font-size: 11px;"></i> <span class="btn-text vote-btn-text">समर्थन दिया</span> (<span class="vote-num-' + candId + '">' + votes + '</span>)';
       btn.onclick = function(e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
-        showToast('आप पहले ही समर्थन दे चुके हैं! एक नागरिक केवल एक बार समर्थन दे सकता है।', 'info');
+        showToast('इस डिवाइस से पहले ही समर्थन दिया जा चुका है! एक डिवाइस से केवल एक ही समर्थन मान्य है।', 'info');
       };
     }
   });
@@ -196,20 +251,34 @@ function applyVotedButtonStates(votedCandidateId) {
       detailBtn.innerHTML = '<i class="fa-solid fa-lock"></i> <span>समर्थन दिया जा चुका है</span>';
       detailBtn.onclick = function(e) {
         if (e) { e.preventDefault(); e.stopPropagation(); }
-        showToast('आप पहले ही समर्थन दे चुके हैं! एक नागरिक केवल एक बार समर्थन दे सकता है।', 'info');
+        showToast('इस डिवाइस से पहले ही समर्थन दिया जा चुका है! एक डिवाइस से केवल एक ही समर्थन मान्य है।', 'info');
       };
     }
   }
 }
 
-function initSingleVoteTracking() {
+async function initSingleVoteTracking() {
+  const deviceId = getDeviceFingerprint();
   const votedId = getVotedCandidate();
   if (votedId) {
     applyVotedButtonStates(votedId);
+    return;
   }
+
+  // Check backend using Device ID to lock even if user opens incognito / clears cookies on this device
+  try {
+    const res = await fetch('/api/my-vote?deviceId=' + encodeURIComponent(deviceId));
+    if (res.ok) {
+      const data = await res.json();
+      if (data.hasVoted && data.candidateId) {
+        setVotedCandidate(data.candidateId);
+        applyVotedButtonStates(data.candidateId);
+      }
+    }
+  } catch(e) {}
 }
 
-// 3. Support / Vote Pledge with Strict One-Vote Enforcement & Live Sync
+// 3. Support / Vote Pledge with Strict Device Lock & Direct DB Update
 window.pledgeSupport = async function(event, candidateId, btn) {
   if (event) {
     event.preventDefault();
@@ -217,11 +286,13 @@ window.pledgeSupport = async function(event, candidateId, btn) {
   }
   if (!candidateId) return;
 
+  const deviceId = getDeviceFingerprint();
+
   // Strict check: if already supported, do not proceed and warn user
   const alreadyVoted = getVotedCandidate();
   if (alreadyVoted) {
     applyVotedButtonStates(alreadyVoted);
-    showToast('आप पहले ही अपना समर्थन दर्ज कर चुके हैं! एक नागरिक केवल एक बार समर्थन दे सकता है।', 'info');
+    showToast('इस डिवाइस से पहले ही समर्थन दिया जा चुका है! एक डिवाइस से केवल एक ही समर्थन मान्य है।', 'info');
     return;
   }
 
@@ -234,7 +305,8 @@ window.pledgeSupport = async function(event, candidateId, btn) {
   try {
     const res = await fetch('/api/vote/' + candidateId, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceId: deviceId })
     });
     const data = await res.json();
 
@@ -248,7 +320,7 @@ window.pledgeSupport = async function(event, candidateId, btn) {
       // 3. Immediately lock all other buttons across the page
       applyVotedButtonStates(candidateId);
 
-      showToast('धन्यवाद! आपका समर्थन सफलतापूर्वक दर्ज कर लिया गया है।');
+      showToast('धन्यवाद! आपका समर्थन डेटाबेस में सफलतापूर्वक दर्ज कर लिया गया है।');
     } else {
       if (data.alreadyVoted) {
         const savedId = data.votedCandidate || candidateId;
@@ -258,7 +330,7 @@ window.pledgeSupport = async function(event, candidateId, btn) {
         btn.disabled = false;
         btn.style.opacity = '1';
       }
-      showToast(data.message || 'आप पहले ही समर्थन दे चुके हैं।', 'info');
+      showToast(data.message || 'इस डिवाइस से पहले ही समर्थन दिया जा चुका है।', 'info');
     }
   } catch (e) {
     console.error(e);
