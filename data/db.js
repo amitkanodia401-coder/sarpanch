@@ -76,6 +76,10 @@ async function initDb() {
     // Custom wasm locator for bundled environments like Vercel
     const SQL = await initSqlJs({
       locateFile: file => {
+        const localWasm = path.join(__dirname, file);
+        if (fs.existsSync(localWasm)) return localWasm;
+        const cwdWasm = path.join(process.cwd(), 'data', file);
+        if (fs.existsSync(cwdWasm)) return cwdWasm;
         try {
           const sqlJsDist = path.dirname(require.resolve('sql.js'));
           const wasmPath = path.join(sqlJsDist, file);
