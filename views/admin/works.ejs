@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %></title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="admin-body">
+
+  <%- include('../partials/admin-sidebar') %>
+
+  <div class="admin-main">
+    <%- include('../partials/admin-topbar') %>
+
+    <main class="admin-content">
+
+      <!-- Header Row (Screen 8) -->
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+        <div>
+          <h1 style="font-size: 22px; font-weight: 800; color: #1e293b;">ग्राम विकास कार्य प्रबंधन</h1>
+          <p style="font-size: 13.5px; color: #64748b;">गाँव में स्वीकृत, प्रगतिरत व पूर्ण निर्माण कार्यों का रिकॉर्ड</p>
+        </div>
+
+        <button onclick="openAdminModal('addWorkModal')" class="btn btn-primary" style="background: #108e5e; border-radius: 8px;">
+          <i class="fa-solid fa-plus"></i> नया कार्य जोड़ें
+        </button>
+      </div>
+
+      <!-- Controls & Filter Row (Screen 8) -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <!-- Filter Tabs -->
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button class="filter-tab admin-filter-tab active" data-status="all">सभी</button>
+            <button class="filter-tab admin-filter-tab" data-status="पूर्ण">पूर्ण</button>
+            <button class="filter-tab admin-filter-tab" data-status="चालू">चालू</button>
+            <button class="filter-tab admin-filter-tab" data-status="आगामी">आगामी</button>
+          </div>
+
+          <!-- Search Input -->
+          <div class="admin-table-controls">
+            <div style="position: relative;">
+              <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
+              <input type="text" id="adminTableSearch" class="admin-search-input" placeholder="कार्य का नाम खोजें..." style="padding-left: 32px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Table (Screen 8) -->
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">क्रम</th>
+              <th>कार्य का नाम</th>
+              <th>राशि (₹)</th>
+              <th>स्थिति</th>
+              <th>दिनांक</th>
+              <th style="text-align: right;">एक्शन</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% works.forEach((w, index) => { %>
+              <% 
+                let statusChip = 'green';
+                if (w.status === 'चालू') statusChip = 'amber';
+                if (w.status === 'आगामी') statusChip = 'blue';
+              %>
+              <tr class="work-table-row searchable-row" data-status="<%= w.status %>">
+                <td><strong><%= index + 1 %></strong></td>
+                <td>
+                  <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 4px; flex-wrap: wrap;">
+                    <% if (w.workCode) { %>
+                      <span style="font-family: monospace; font-size: 11px; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 1px 6px; border-radius: 4px;"><%= w.workCode %></span>
+                    <% } %>
+                    <% if (w.vouchers && w.vouchers.length) { %>
+                      <span class="status-chip green" style="font-size: 10.5px; padding: 1px 6px;"><i class="fa-solid fa-receipt"></i> <%= w.vouchers.length %> वाउचर प्रमाणित</span>
+                    <% } %>
+                  </div>
+                  <div style="font-weight: 700; color: #1e293b;"><%= w.title %></div>
+                  <div style="font-size: 12px; color: #64748b;"><%= w.scheme %> • <%= w.length %></div>
+                </td>
+                <td style="font-weight: 700; color: #0f172a;">
+                  <%= w.budget ? w.budget.toLocaleString('en-IN') : '0' %>
+                </td>
+                <td>
+                  <span class="status-chip <%= statusChip %>"><%= w.status %></span>
+                </td>
+                <td style="color: #64748b; font-size: 13px;"><%= w.endDate || w.startDate %></td>
+                <td style="text-align: right;">
+                  <div class="action-btn-group" style="justify-content: flex-end;">
+                    <a href="/work/<%= w.id %>" target="_blank" class="icon-action-btn" title="लाइव देखें">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                    <button type="button" onclick="editWork(<%= JSON.stringify(w) %>)" class="icon-action-btn" title="संपादित करें">
+                      <i class="fa-regular fa-pen-to-square"></i>
+                    </button>
+                    <button type="button" onclick="confirmDelete('<%= w.title %>', '/api/works/<%= w.id %>/delete')" class="icon-action-btn delete" title="हटाएं">
+                      <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Report Download Row (Screen 8) -->
+      <div class="reports-download-row">
+        <div>
+          <h4>रिपोर्ट डाउनलोड करें</h4>
+          <p style="font-size: 13px; color: #64748b;">सरकारी ऑडिट एवं ग्राम सभा हेतु प्रमाणित डेटा प्रारूप</p>
+        </div>
+        <div class="reports-buttons">
+          <a href="/api/export/works.csv" class="btn btn-outline btn-sm">
+            <i class="fa-solid fa-file-csv" style="color: #108e5e;"></i> विकास कार्य रिपोर्ट (CSV)
+          </a>
+          <button onclick="window.print()" class="btn btn-outline btn-sm">
+            <i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i> वित्तीय रिपोर्ट (PDF)
+          </a>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal: नया कार्य जोड़ें (Add New Work) -->
+  <div id="addWorkModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3>🏗️ नया ग्राम विकास कार्य जोड़ें</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('addWorkModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form action="/api/works" method="POST">
+          <div class="form-group">
+            <label>कार्य का नाम *</label>
+            <input type="text" name="title" class="form-control" placeholder="उदा. मुख्य सड़क का निर्माण" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>योजना का नाम *</label>
+              <input type="text" name="scheme" class="form-control" placeholder="उदा. प्रधानमंत्री ग्रामीण सड़क योजना" required>
+            </div>
+            <div class="form-group">
+              <label>कार्य श्रेणी</label>
+              <select name="category" class="form-control">
+                <option value="सड़क">सड़क निर्माण</option>
+                <option value="पेयजल">पेयजल / नल-जल</option>
+                <option value="शिक्षा">शिक्षा / स्कूल भवन</option>
+                <option value="बिजली">स्ट्रीट लाइट / विद्युतीकरण</option>
+                <option value="पर्यावरण">तालाब / अमृत सरोवर</option>
+                <option value="भवन">सामुदायिक भवन</option>
+                <option value="स्वास्थ्य">स्वास्थ्य उपकेंद्र</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>कुल स्वीकृत बजट (₹) *</label>
+              <input type="number" id="workBudgetInput" name="budget" class="form-control" placeholder="उदा. 5000000" required>
+            </div>
+            <div class="form-group">
+              <label>अब तक कुल खर्च राशि (₹)</label>
+              <input type="number" id="workSpentInput" name="spent" class="form-control" placeholder="उदा. 4820000" value="0">
+            </div>
+          </div>
+
+          <div style="font-size: 13px; color: #64748b; margin-bottom: 16px; background: #f8fafc; padding: 8px 12px; border-radius: 6px;">
+            अनुमानित शेष राशि: <strong id="workBalanceDisplay" style="color: #0284c7;">₹0</strong>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>कार्य की स्थिति *</label>
+              <select name="status" class="form-control" required>
+                <option value="पूर्ण">पूर्ण (Completed)</option>
+                <option value="चालू" selected>चालू (In Progress)</option>
+                <option value="आगामी">आगामी (Upcoming)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>प्रगति (%)</label>
+              <input type="number" name="progress" class="form-control" min="0" max="100" placeholder="उदा. 85" value="50">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>माप / लंबाई</label>
+              <input type="text" name="length" class="form-control" placeholder="उदा. 1.2 किमी">
+            </div>
+            <div class="form-group">
+              <label>ठेकेदार / एजेंसी</label>
+              <input type="text" name="contractor" class="form-control" placeholder="उदा. शिवम कंस्ट्रक्शन">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>प्रारंभ तिथि</label>
+              <input type="text" name="startDate" class="form-control" placeholder="उदा. 15 मार्च 2024">
+            </div>
+            <div class="form-group">
+              <label>पूर्ण तिथि</label>
+              <input type="text" name="endDate" class="form-control" placeholder="उदा. 10 जून 2024">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>तस्वीर का URL (वैकल्पिक)</label>
+            <input type="url" name="image" class="form-control" placeholder="https://images.unsplash.com/...">
+          </div>
+
+          <div class="form-group">
+            <label>कार्य का विस्तृत विवरण</label>
+            <textarea name="description" class="form-control" rows="3" placeholder="कार्य से संबंधित महत्वपूर्ण बिंदु लिखें..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 8px;">
+            <i class="fa-solid fa-check"></i> सुरक्षित करें व प्रकाशित करें
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: कार्य संपादित करें (Edit Work) -->
+  <div id="editWorkModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3>✏️ कार्य विवरण संपादित करें</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('editWorkModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editWorkForm" method="POST">
+          <div class="form-group">
+            <label>कार्य का नाम *</label>
+            <input type="text" id="editWorkTitle" name="title" class="form-control" required>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>योजना का नाम *</label>
+              <input type="text" id="editWorkScheme" name="scheme" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>कार्य श्रेणी</label>
+              <input type="text" id="editWorkCategory" name="category" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>कुल स्वीकृत बजट (₹) *</label>
+              <input type="number" id="editWorkBudget" name="budget" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>अब तक खर्च राशि (₹)</label>
+              <input type="number" id="editWorkSpent" name="spent" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>कार्य की स्थिति *</label>
+              <select id="editWorkStatus" name="status" class="form-control" required>
+                <option value="पूर्ण">पूर्ण</option>
+                <option value="चालू">चालू</option>
+                <option value="आगामी">आगामी</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>प्रगति (%)</label>
+              <input type="number" id="editWorkProgress" name="progress" class="form-control" min="0" max="100">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>माप / लंबाई</label>
+              <input type="text" id="editWorkLength" name="length" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>ठेकेदार</label>
+              <input type="text" id="editWorkContractor" name="contractor" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>विस्तृत विवरण</label>
+            <textarea id="editWorkDescription" name="description" class="form-control" rows="3"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 8px;">
+            <i class="fa-solid fa-floppy-disk"></i> परिवर्तन सुरक्षित करें
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %></title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    .admin-tab-section {
+      display: none;
+    }
+    .admin-tab-section.active {
+      display: block;
+      animation: fadeIn 0.25s ease;
+    }
+    .view-toggle-btn.active {
+      background: #108e5e !important;
+      color: white !important;
+    }
+  </style>
+</head>
+<body class="admin-body">
+
+  <%- include('../partials/admin-sidebar') %>
+
+  <div class="admin-main">
+    <header class="admin-topbar">
+      <div class="admin-topbar-title">
+        <h1 id="topbarTitle">डैशबोर्ड - ग्राम पंचायत प्रबंधन</h1>
+      </div>
+
+      <div class="admin-topbar-actions">
+        <a href="/" target="_blank" class="btn btn-outline btn-sm" style="font-size: 13px; font-weight: 600;">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> सार्वजनिक वेबसाइट
+        </a>
+
+        <div class="admin-user-profile">
+          <div class="admin-user-avatar">
+            A
+          </div>
+          <div class="admin-user-info">
+            <h4>Admin</h4>
+            <span>सुपर एडमिन (प्रशासक)</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="admin-content">
+
+      <!-- ====================================================
+           TAB 1: डैशबोर्ड (Screen 7 - Dashboard)
+           ==================================================== -->
+      <section id="section-dashboard" class="admin-tab-section <%= activeTab === 'dashboard' ? 'active' : '' %>">
+        <!-- Upcoming Gram Sabha Meeting Notification Admin Banner/Card -->
+        <div class="admin-card" style="margin-bottom: 24px; padding: 22px 24px; border-left: 5px solid #108e5e; background: linear-gradient(to right, #f0fdf4, #ffffff); box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px;">
+            <div style="display: flex; gap: 16px; align-items: flex-start; flex: 1; min-width: 280px;">
+              <div style="width: 48px; height: 48px; background: #e8f5ee; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #108e5e; font-size: 22px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(16,142,94,0.15);">
+                <i class="fa-solid fa-bullhorn"></i>
+              </div>
+              <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px; flex-wrap: wrap;">
+                  <h3 style="font-size: 17px; font-weight: 800; color: #0f172a; margin: 0;">
+                    <%= (locals.gramSabha && gramSabha.title) ? gramSabha.title : 'आगामी ग्राम सभा खुली बैठक' %>
+                  </h3>
+                  <span class="status-chip <%= (locals.gramSabha && gramSabha.active) ? 'green' : 'amber' %>" style="font-size: 11px;">
+                    <i class="fa-solid <%= (locals.gramSabha && gramSabha.active) ? 'fa-circle-check' : 'fa-circle-pause' %>"></i>
+                    <%= (locals.gramSabha && gramSabha.status) ? gramSabha.status : 'सक्रिय प्रसारण' %>
+                  </span>
+                </div>
+                <div style="display: flex; gap: 14px; font-size: 13.5px; color: #334155; margin-bottom: 8px; flex-wrap: wrap;">
+                  <span><strong>📅 दिनांक:</strong> <%= (locals.gramSabha && gramSabha.date) ? gramSabha.date : '15 अगस्त 2024' %></span>
+                  <span><strong>⏰ समय:</strong> <%= (locals.gramSabha && gramSabha.time) ? gramSabha.time : 'प्रातः 10:00 बजे' %></span>
+                  <span><strong>📍 स्थान:</strong> <%= (locals.gramSabha && gramSabha.location) ? gramSabha.location : 'ग्राम पंचायत भवन चौपाल (काकोड़ा)' %></span>
+                </div>
+                <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0;">
+                  <strong style="color: #1e293b;">🎯 मुख्य एजेंडा:</strong> <%= (locals.gramSabha && gramSabha.agenda) ? gramSabha.agenda : 'जल निकासी नाली, अमृत सरोवर और नई स्ट्रीट लाइट योजना।' %>
+                </p>
+              </div>
+            </div>
+            <div>
+              <button type="button" onclick="openAdminModal('editGramSabhaModal')" class="btn btn-primary" style="background: #108e5e; border-radius: 8px; font-size: 13.5px; padding: 10px 18px; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(16,142,94,0.25); white-space: nowrap;">
+                <i class="fa-solid fa-pen-to-square"></i> बैठक विवरण संपादित करें
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Title -->
+        <div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+          <h2 style="font-size: 18px; font-weight: 700; color: #1e293b;">आज की गतिविधि एवं विज़िटर आंकड़े</h2>
+          <span style="font-size: 13px; color: #64748b;"><i class="fa-solid fa-clock-rotate-left"></i> स्वचालित रियल-टाइम अपडेट</span>
+        </div>
+
+        <!-- 4 KPI Metrics (Screen 7) -->
+        <div class="stats-cards-grid">
+          <div class="kpi-card">
+            <div class="kpi-title">कुल विज़िटर्स</div>
+            <div class="kpi-value-row">
+              <div class="kpi-value"><%= stats.totalVisitors.toLocaleString('en-IN') %></div>
+              <div class="kpi-badge up">
+                <i class="fa-solid fa-arrow-up"></i> +12%
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-title">अद्वितीय विज़िटर्स</div>
+            <div class="kpi-value-row">
+              <div class="kpi-value"><%= stats.uniqueVisitors.toLocaleString('en-IN') %></div>
+              <div class="kpi-badge up">
+                <i class="fa-solid fa-arrow-up"></i> +8%
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-title">देखे गए पेज</div>
+            <div class="kpi-value-row">
+              <div class="kpi-value"><%= stats.pageViews.toLocaleString('en-IN') %></div>
+              <div class="kpi-badge up">
+                <i class="fa-solid fa-arrow-up"></i> +15%
+              </div>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-title">औसत समय</div>
+            <div class="kpi-value-row">
+              <div class="kpi-value"><%= stats.avgDuration %></div>
+              <div class="kpi-badge up" style="background: #e0f2fe; color: #0284c7;">
+                मिनट
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Candidate Support Status / Tracker (सरपंच पद समर्थन रिपोर्ट) -->
+        <% 
+          const totalSupportVotes = candidates.reduce((sum, c) => sum + (Number(c.votes) || 0), 0);
+          const sortedCandidates = [...candidates].sort((a, b) => (Number(b.votes) || 0) - (Number(a.votes) || 0));
+        %>
+        <div class="admin-card" style="margin-bottom: 28px; border: 1px solid #fed7aa; background: #ffffff; box-shadow: 0 4px 14px rgba(234, 88, 12, 0.08); border-radius: 14px; overflow: hidden;">
+          <div style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border-bottom: 1px solid #fed7aa; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="background: #ea580c; color: white; width: 34px; height: 34px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; font-size: 17px; box-shadow: 0 2px 6px rgba(234, 88, 12, 0.3);">
+                  <i class="fa-solid fa-square-poll-vertical"></i>
+                </span>
+                <h3 style="font-size: 19px; font-weight: 800; color: #9a3412; margin: 0;">सरपंच पद उम्मीदवार - लाइव जन समर्थन रिपोर्ट</h3>
+              </div>
+              <p style="font-size: 13.5px; color: #7c2d12; margin: 4px 0 0 44px;">
+                ग्रामवासियों द्वारा दिया गया लाइव समर्थन • कुल दर्ज समर्थन: <strong style="color: #ea580c; font-size: 16px;"><%= totalSupportVotes %> मत</strong>
+              </p>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <button type="button" onclick="resetSupportVotes()" class="btn btn-sm" style="background: #ef4444; color: white; border: none; font-weight: 700; padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25); cursor: pointer;">
+                <i class="fa-solid fa-rotate-left"></i> समर्थन 0 करें (रीसेट)
+              </button>
+              <button type="button" onclick="switchTab('candidates')" class="btn btn-sm btn-outline" style="border-color: #fdba74; color: #9a3412; font-weight: 600; padding: 8px 14px; border-radius: 8px; background: white;">
+                उम्मीदवार विवरण देखें &rarr;
+              </button>
+            </div>
+          </div>
+
+          <div style="padding: 22px 24px;">
+            <% if (totalSupportVotes === 0) { %>
+              <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px;">
+                <i class="fa-solid fa-circle-info" style="color: #64748b; font-size: 20px;"></i>
+                <div style="font-size: 13.5px; color: #475569;">
+                  <strong>वर्तमान स्थिति:</strong> सभी उम्मीदवारों का समर्थन <strong>0</strong> है। जब कोई नागरिक होम पेज या उम्मीदवार प्रोफाइल पर <em>'समर्थन'</em> बटन दबाएगा, तो केवल उस उम्मीदवार का समर्थन 1 बढ़ेगा और यहाँ लाइव दिखेगा।
+                </div>
+              </div>
+            <% } %>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 18px;">
+              <% sortedCandidates.forEach((c, idx) => { 
+                const candVotes = Number(c.votes) || 0;
+                const percent = totalSupportVotes > 0 ? Math.round((candVotes / totalSupportVotes) * 100) : 0;
+                const isLeader = totalSupportVotes > 0 && idx === 0 && candVotes > 0;
+              %>
+                <div style="border: 1px solid <%= isLeader ? '#f59e0b' : '#e2e8f0' %>; background: <%= isLeader ? '#fffbeb' : '#ffffff' %>; border-radius: 12px; padding: 16px 18px; position: relative; box-shadow: <%= isLeader ? '0 4px 12px rgba(245, 158, 11, 0.15)' : 'none' %>;">
+                  <% if (isLeader) { %>
+                    <span style="position: absolute; top: -10px; right: 16px; background: #f59e0b; color: white; font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 999px; box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);">
+                      🏆 सर्वाधिक समर्थन
+                    </span>
+                  <% } %>
+
+                  <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px;">
+                    <img src="<%= c.photo %>" alt="<%= c.name %>" style="width: 54px; height: 54px; border-radius: 50%; object-fit: cover; border: 2px solid <%= isLeader ? '#f59e0b' : '#cbd5e1' %>;">
+                    <div style="flex: 1;">
+                      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                        <h4 style="font-size: 16.5px; font-weight: 700; color: #1e293b; margin: 0;"><%= c.name %></h4>
+                        <span class="party-badge <%= c.partyBadge ? c.partyBadge.toLowerCase() : '' %>" style="margin: 0; font-size: 11px;"><%= c.party %></span>
+                      </div>
+                      <div style="font-size: 12px; color: #64748b; margin-top: 3px;">
+                        <%= c.ward %> • <%= c.village %>
+                      </div>
+                    </div>
+                    <div style="text-align: right; min-width: 70px;">
+                      <div style="font-size: 24px; font-weight: 800; color: #e11d48; line-height: 1;">
+                        <%= candVotes %>
+                      </div>
+                      <div style="font-size: 11px; color: #64748b; font-weight: 600;">समर्थन मत</div>
+                    </div>
+                  </div>
+
+                  <!-- Progress Bar -->
+                  <div style="margin-top: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #475569;">
+                      <span>समर्थन भागीदारी:</span>
+                      <strong style="color: #1e293b;"><%= percent %>%</strong>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 999px; overflow: hidden;">
+                      <div style="width: <%= percent %>%; height: 100%; background: <%= isLeader ? 'linear-gradient(90deg, #f59e0b, #ea580c)' : 'linear-gradient(90deg, #f43f5e, #e11d48)' %>; border-radius: 999px; transition: width 0.4s ease;"></div>
+                    </div>
+                  </div>
+                </div>
+              <% }); %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Charts Grid (Screen 7) -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3 class="chart-card-title">विज़िटर्स ग्राफ (साप्ताहिक)</h3>
+              <span style="font-size: 12px; color: #64748b;">10-Aug — 16-Aug</span>
+            </div>
+
+            <div class="chart-container" style="height: 220px;">
+              <svg viewBox="0 0 500 200" style="width: 100%; height: 100%; overflow: visible;">
+                <defs>
+                  <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.35"/>
+                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0"/>
+                  </linearGradient>
+                </defs>
+                <line x1="0" y1="40" x2="500" y2="40" stroke="#f1f5f9" stroke-dasharray="4"/>
+                <line x1="0" y1="90" x2="500" y2="90" stroke="#f1f5f9" stroke-dasharray="4"/>
+                <line x1="0" y1="140" x2="500" y2="140" stroke="#f1f5f9" stroke-dasharray="4"/>
+                <polygon points="0,150 70,120 150,135 230,95 310,110 390,70 470,85 500,80 500,180 0,180" fill="url(#areaGradient)" />
+                <polyline points="0,150 70,120 150,135 230,95 310,110 390,70 470,85 500,80" fill="none" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                <circle cx="70" cy="120" r="4" fill="#2563eb" stroke="#ffffff" stroke-width="2" />
+                <circle cx="150" cy="135" r="4" fill="#2563eb" stroke="#ffffff" stroke-width="2" />
+                <circle cx="230" cy="95" r="4" fill="#2563eb" stroke="#ffffff" stroke-width="2" />
+                <circle cx="310" cy="110" r="4" fill="#2563eb" stroke="#ffffff" stroke-width="2" />
+                <circle cx="390" cy="70" r="5" fill="#108e5e" stroke="#ffffff" stroke-width="2" />
+                <circle cx="470" cy="85" r="4" fill="#2563eb" stroke="#ffffff" stroke-width="2" />
+              </svg>
+              <div style="display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; margin-top: 8px;">
+                <span>10-Aug</span><span>11-Aug</span><span>12-Aug</span><span>13-Aug</span><span>14-Aug</span><span>15-Aug</span><span>16-Aug</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-card-header">
+              <h3 class="chart-card-title">पेज व्यूज</h3>
+              <span style="font-size: 12px; color: #64748b;">श्रेणी अनुसार</span>
+            </div>
+
+            <div style="display: flex; justify-content: center; align-items: center; position: relative; height: 160px;">
+              <svg width="150" height="150" viewBox="0 0 42 42">
+                <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
+                <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#f1f5f9" stroke-width="5"></circle>
+                <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#108e5e" stroke-width="5" stroke-dasharray="28 72" stroke-dashoffset="25"></circle>
+                <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#3b82f6" stroke-width="5" stroke-dasharray="22 78" stroke-dashoffset="97"></circle>
+                <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#f59e0b" stroke-width="5" stroke-dasharray="18 82" stroke-dashoffset="75"></circle>
+                <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#8b5cf6" stroke-width="5" stroke-dasharray="12 88" stroke-dashoffset="57"></circle>
+                <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#94a3b8" stroke-width="5" stroke-dasharray="20 80" stroke-dashoffset="45"></circle>
+              </svg>
+              <div style="position: absolute; text-align: center;">
+                <strong style="font-size: 18px; color: #1e293b; display: block; line-height: 1;"><%= stats.pageViews.toLocaleString('en-IN') %></strong>
+                <span style="font-size: 10px; color: #64748b;">कुल व्यूज</span>
+              </div>
+            </div>
+
+            <div class="donut-legend">
+              <div class="legend-item"><span><span class="legend-color-dot" style="background: #108e5e;"></span>होम</span><strong>28%</strong></div>
+              <div class="legend-item"><span><span class="legend-color-dot" style="background: #3b82f6;"></span>उम्मीदवार</span><strong>22%</strong></div>
+              <div class="legend-item"><span><span class="legend-color-dot" style="background: #f59e0b;"></span>विकास कार्य</span><strong>18%</strong></div>
+              <div class="legend-item"><span><span class="legend-color-dot" style="background: #8b5cf6;"></span>कर्तव्य</span><strong>12%</strong></div>
+              <div class="legend-item"><span><span class="legend-color-dot" style="background: #94a3b8;"></span>अन्य</span><strong>20%</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activities (Screen 7) -->
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <h3 style="font-size: 16px; font-weight: 700; color: #1e293b;">हाल की गतिविधि</h3>
+            <span style="font-size: 12.5px; color: #64748b;">वेबसाइट विज़िटर लॉग्स</span>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>समय</th>
+                <th>उपयोगकर्ता</th>
+                <th>एक्टिविटी</th>
+                <th>IP एड्रेस</th>
+                <th>एक्शन</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% activities.forEach(act => { %>
+                <tr>
+                  <td><%= act.time %></td>
+                  <td><strong><%= act.user %></strong></td>
+                  <td><span class="status-chip blue"><%= act.action %></span></td>
+                  <td style="color: #64748b; font-family: monospace;"><%= act.ip %></td>
+                  <td>
+                    <button onclick="switchTab('analytics')" class="icon-action-btn" title="एनालिटिक्स देखें">
+                      <i class="fa-regular fa-eye"></i>
+                    </button>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           TAB 2: उम्मीदवार सूची व प्रोफाइल (Screen 2 & Screen 3)
+           ==================================================== -->
+      <section id="section-candidates" class="admin-tab-section <%= activeTab === 'candidates' ? 'active' : '' %>">
+        <!-- Top Controls -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+          <div>
+            <h2 style="font-size: 22px; font-weight: 800; color: #1e293b;">👥 उम्मीदवार सूची व प्रोफाइल (स्क्रीन 2 & 3)</h2>
+            <p style="font-size: 13.5px; color: #64748b;">प्रत्याशियों का घोषणापत्र, जन समर्थन एवं विस्तृत प्रोफाइल प्रबंधन</p>
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <button onclick="openAdminModal('addCandidateModal')" class="btn btn-primary" style="background: #108e5e; border-radius: 8px;">
+              <i class="fa-solid fa-user-plus"></i> नया उम्मीदवार जोड़ें
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Chips (Screen 2) -->
+        <div class="admin-card" style="padding: 20px 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px;">
+            <div class="filter-tabs" style="margin-bottom: 0;">
+              <button class="filter-tab party-filter-chip active" data-party="all">सभी उम्मीदवार</button>
+              <button class="filter-tab party-filter-chip" data-party="BJP">भारतीय जनता पार्टी (BJP)</button>
+              <button class="filter-tab party-filter-chip" data-party="INC">कांग्रेस</button>
+              <button class="filter-tab party-filter-chip" data-party="ADU">अपना दल</button>
+              <button class="filter-tab party-filter-chip" data-party="IND">निर्दलीय</button>
+            </div>
+
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <input type="text" id="candidateSearchInput" class="admin-search-input" placeholder="उम्मीदवार का नाम खोजें..." style="width: 200px;">
+              <select id="candidateWardSelect" class="form-control" style="width: 140px; padding: 8px 12px; font-size: 13px;">
+                <option value="all">सभी वार्ड</option>
+                <option value="वार्ड 1">वार्ड 1</option>
+                <option value="वार्ड 2">वार्ड 2</option>
+                <option value="वार्ड 4">वार्ड 4</option>
+                <option value="वार्ड 7">वार्ड 7</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Candidates List (Screen 2 Layout inside Admin) -->
+          <div style="display: flex; flex-direction: column; gap: 14px;">
+            <% candidates.forEach(c => { %>
+              <div class="candidate-list-item" data-name="<%= c.name %>" data-party="<%= c.partyBadge %>" data-ward="<%= c.ward %>" style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 22px; display: flex; align-items: center; justify-content: space-between; gap: 16px; background: #ffffff;">
+                <div style="display: flex; align-items: center; gap: 18px;">
+                  <img src="<%= c.photo %>" alt="<%= c.name %>" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid #e2e8f0;">
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                      <h4 style="font-size: 18px; font-weight: 700; color: #1e293b;"><%= c.name %></h4>
+                      <span class="party-badge <%= c.partyBadge.toLowerCase() %>" style="margin: 0;"><%= c.party %></span>
+                      <span style="font-size: 11px; background: #0f172a; color: white; padding: 2px 8px; border-radius: 999px;"><%= c.ward %></span>
+                    </div>
+                    <p style="font-size: 13.5px; color: #64748b; font-style: italic; margin-bottom: 4px;">"<%= c.slogan %>"</p>
+                    <div style="display: flex; gap: 14px; font-size: 12px; color: #94a3b8;">
+                      <span><i class="fa-solid fa-cake-candles"></i> <%= c.age %> वर्ष</span>
+                      <span><i class="fa-solid fa-graduation-cap"></i> <%= c.education %></span>
+                      <span><i class="fa-solid fa-location-dot"></i> <%= c.village %></span>
+                      <span><i class="fa-solid fa-phone"></i> <%= c.phone %></span>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <div style="text-align: right; margin-right: 12px; background: #fff1f2; border: 1px solid #fecdd3; padding: 6px 14px; border-radius: 8px;">
+                    <div style="font-size: 11px; color: #be123c; font-weight: 700;"><i class="fa-solid fa-heart"></i> कुल जन समर्थन</div>
+                    <strong style="color: #e11d48; font-size: 18px;"><%= c.votes %></strong> <span style="font-size: 11px; color: #64748b;">मत</span>
+                  </div>
+                  <!-- View Profile Trigger (Screen 3 Modal) -->
+                  <button type="button" onclick="viewCandidateProfile(<%= JSON.stringify(c) %>)" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-address-card"></i> प्रोफाइल देखें (स्क्रीन 3)
+                  </button>
+                  <button type="button" onclick="editCandidate(<%= JSON.stringify(c) %>)" class="icon-action-btn" title="एडिट">
+                    <i class="fa-regular fa-pen-to-square"></i>
+                  </button>
+                  <button type="button" onclick="confirmDelete('<%= c.name %>', '/api/candidates/<%= c.id %>/delete')" class="icon-action-btn delete" title="हटाएं">
+                    <i class="fa-regular fa-trash-can"></i>
+                  </button>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           TAB 3: ग्राम विकास कार्य (Screen 8, 5 & 4)
+           ==================================================== -->
+      <section id="section-works" class="admin-tab-section <%= activeTab === 'works' ? 'active' : '' %>">
+        <!-- Top Action Row -->
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+          <div>
+            <h2 style="font-size: 22px; font-weight: 800; color: #1e293b;">🏗️ ग्राम विकास कार्य प्रबंधन (स्क्रीन 8, 5 & 4)</h2>
+            <p style="font-size: 13.5px; color: #64748b;">स्वीकृत कार्य, बजट आवंटन, प्रगति बार एवं विस्तृत वित्तीय ब्यौरा</p>
+          </div>
+
+          <div style="display: flex; gap: 10px;">
+            <button onclick="toggleWorksView('table')" id="btnViewTable" class="btn btn-sm view-toggle-btn active" style="border: 1px solid #cbd5e1; background: #108e5e; color: white;">
+              <i class="fa-solid fa-table-list"></i> तालिका व्यू (स्क्रीन 8)
+            </button>
+            <button onclick="toggleWorksView('cards')" id="btnViewCards" class="btn btn-sm view-toggle-btn" style="border: 1px solid #cbd5e1; background: white; color: #334155;">
+              <i class="fa-solid fa-table-cells-large"></i> गैलरी व्यू (स्क्रीन 5)
+            </button>
+            <button onclick="openAdminModal('addWorkModal')" class="btn btn-primary btn-sm" style="background: #108e5e;">
+              <i class="fa-solid fa-plus"></i> नया कार्य जोड़ें
+            </button>
+          </div>
+        </div>
+
+        <!-- 1. SCREEN 8: Table Management View -->
+        <div id="worksTableView" class="admin-card">
+          <div class="admin-card-header">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="filter-tab admin-filter-tab active" data-status="all">सभी कार्य</button>
+              <button class="filter-tab admin-filter-tab" data-status="पूर्ण">पूर्ण हुए कार्य</button>
+              <button class="filter-tab admin-filter-tab" data-status="चालू">चालू</button>
+              <button class="filter-tab admin-filter-tab" data-status="आगामी">आगामी</button>
+            </div>
+
+            <div class="admin-table-controls">
+              <input type="text" id="adminTableSearch" class="admin-search-input" placeholder="कार्य का नाम खोजें...">
+            </div>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 50px;">क्रम</th>
+                <th>कार्य का नाम</th>
+                <th>स्वीकृत राशि (₹)</th>
+                <th>खर्च राशि (₹)</th>
+                <th>स्थिति</th>
+                <th>दिनांक</th>
+                <th style="text-align: right;">एक्शन</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% works.forEach((w, index) => { %>
+                <% 
+                  let chipClass = 'green';
+                  if (w.status === 'चालू') chipClass = 'amber';
+                  if (w.status === 'आगामी') chipClass = 'blue';
+                %>
+                <tr class="work-table-row searchable-row" data-status="<%= w.status %>">
+                  <td><strong><%= index + 1 %></strong></td>
+                  <td>
+                    <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 4px; flex-wrap: wrap;">
+                      <% if (w.workCode) { %>
+                        <span style="font-family: monospace; font-size: 11px; font-weight: 700; color: #0284c7; background: #e0f2fe; padding: 1px 6px; border-radius: 4px;"><%= w.workCode %></span>
+                      <% } %>
+                      <% if (w.vouchers && w.vouchers.length) { %>
+                        <span class="status-chip green" style="font-size: 10.5px; padding: 1px 6px;"><i class="fa-solid fa-receipt"></i> <%= w.vouchers.length %> वाउचर प्रमाणित</span>
+                      <% } %>
+                    </div>
+                    <div style="font-weight: 700; color: #1e293b;"><%= w.title %></div>
+                    <div style="font-size: 12px; color: #64748b;"><%= w.scheme %> • <%= w.length %></div>
+                  </td>
+                  <td style="font-weight: 700; color: #0f172a;">
+                    ₹<%= w.budget ? w.budget.toLocaleString('en-IN') : '0' %>
+                  </td>
+                  <td style="color: #108e5e; font-weight: 600;">
+                    ₹<%= w.spent ? w.spent.toLocaleString('en-IN') : '0' %>
+                  </td>
+                  <td>
+                    <span class="status-chip <%= chipClass %>"><%= w.status %></span>
+                  </td>
+                  <td style="color: #64748b; font-size: 13px;"><%= w.endDate || w.startDate %></td>
+                  <td style="text-align: right;">
+                    <div class="action-btn-group" style="justify-content: flex-end;">
+                      <!-- Open Screen 4 Work Detail Modal -->
+                      <button type="button" onclick="viewWorkDetail(<%= JSON.stringify(w) %>)" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 12px;">
+                        <i class="fa-solid fa-eye"></i> विवरण (स्क्रीन 4)
+                      </button>
+                      <button type="button" onclick="editWork(<%= JSON.stringify(w) %>)" class="icon-action-btn" title="एडिट">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                      </button>
+                      <button type="button" onclick="confirmDelete('<%= w.title %>', '/api/works/<%= w.id %>/delete')" class="icon-action-btn delete" title="हटाएं">
+                        <i class="fa-regular fa-trash-can"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 2. SCREEN 5: Gallery Cards View (Hidden by default, toggled with button) -->
+        <div id="worksCardsView" style="display: none; margin-bottom: 28px;">
+          <div class="works-grid">
+            <% works.forEach(work => { %>
+              <% 
+                let statusClass = 'completed';
+                if (work.status === 'चालू') statusClass = 'in-progress';
+                if (work.status === 'आगामी') statusClass = 'upcoming';
+              %>
+              <div class="work-card" data-status="<%= work.status %>">
+                <div class="work-card-body">
+                  <div class="work-card-top-bar" style="margin-bottom: 8px;">
+                    <span class="badge-work-scheme"><i class="fa-solid fa-landmark"></i> <%= work.scheme %></span>
+                    <span class="work-status-badge <%= statusClass %>"><%= work.status %></span>
+                  </div>
+                  <h3 class="work-card-title"><%= work.title %></h3>
+                  <p class="work-card-scheme"><i class="fa-solid fa-landmark"></i> <%= work.scheme %></p>
+                  
+                  <div style="margin-bottom: 14px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                      <span style="color: #64748b;">प्रगति स्थिति</span>
+                      <strong style="color: #108e5e;"><%= work.progress %>%</strong>
+                    </div>
+                    <div class="progress-bar-wrap" style="height: 6px; margin: 0;">
+                      <div class="progress-bar-fill" style="width: <%= work.progress %>%;"></div>
+                    </div>
+                  </div>
+
+                  <div class="work-card-footer">
+                    <div class="work-budget-tag">
+                      <span>स्वीकृत राशि</span>
+                      ₹<%= work.budget.toLocaleString('en-IN') %>
+                    </div>
+                    <button type="button" onclick="viewWorkDetail(<%= JSON.stringify(work) %>)" class="btn btn-primary btn-sm">
+                      विवरण देखें (स्क्रीन 4)
+                    </button>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+
+        <!-- Reports Download Row -->
+        <div class="reports-download-row">
+          <div>
+            <h4>रिपोर्ट डाउनलोड करें (स्क्रीन 8)</h4>
+            <p style="font-size: 13px; color: #64748b;">सरकारी ऑडिट एवं ग्राम सभा हेतु प्रमाणित डेटा प्रारूप</p>
+          </div>
+          <div class="reports-buttons">
+            <a href="/api/export/works.csv" class="btn btn-outline btn-sm">
+              <i class="fa-solid fa-file-csv" style="color: #108e5e;"></i> विकास कार्य रिपोर्ट (CSV)
+            </a>
+            <button onclick="window.print()" class="btn btn-outline btn-sm">
+              <i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i> वित्तीय रिपोर्ट (PDF)
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           TAB 4: सरपंच के कर्तव्य (Screen 6 - Future Plan)
+           ==================================================== -->
+      <section id="section-duties" class="admin-tab-section <%= activeTab === 'duties' ? 'active' : '' %>">
+        <div style="text-align: center; max-width: 760px; margin: 0 auto 36px;">
+          <span class="party-badge bjp" style="margin-bottom: 8px;">स्क्रीन 6 (भविष्य योजना)</span>
+          <h2 style="font-size: 28px; font-weight: 800; color: #1e293b;">सरपंच को क्या-क्या करना चाहिए?</h2>
+          <p style="font-size: 15px; color: #64748b;">गाँव के समग्र विकास के लिए आने वाले समय में ये 5 मुख्य कार्य करने आवश्यक हैं:</p>
+        </div>
+
+        <div class="duties-list" style="margin-bottom: 40px;">
+          <div class="duty-card">
+            <div class="duty-num" style="background: #0ea5e9;">1</div>
+            <div class="duty-content">
+              <h3>बुनियादी सुविधाएं</h3>
+              <p class="duty-summary" style="color: #0284c7;">• सड़क, पानी, बिजली, नाली की व्यवस्था</p>
+              <p class="duty-desc">हर घर तक पक्की सड़क, 24 घंटे निर्बाध बिजली, नल से स्वच्छ पेयजल और जल निकासी की व्यवस्था करना।</p>
+            </div>
+          </div>
+
+          <div class="duty-card">
+            <div class="duty-num" style="background: #10b981;">2</div>
+            <div class="duty-content">
+              <h3>शिक्षा और स्वास्थ्य</h3>
+              <p class="duty-summary" style="color: #059669;">• विद्यालयों का सुधार • स्वास्थ्य केंद्र और नियमित टीकाकरण</p>
+              <p class="duty-desc">गाँव के स्कूलों में आधुनिक डिजिटल क्लासरूम, लाइब्रेरी एवं प्राथमिक स्वास्थ्य केंद्र में 24 घंटे डॉक्टर की उपलब्धता।</p>
+            </div>
+          </div>
+
+          <div class="duty-card">
+            <div class="duty-num" style="background: #f59e0b;">3</div>
+            <div class="duty-content">
+              <h3>कृषि और रोजगार</h3>
+              <p class="duty-summary" style="color: #d97706;">• किसानों के लिए योजनाएं • रोजगार के नए अवसर</p>
+              <p class="duty-desc">समय पर खाद-बीज उपलब्धता, पीएम किसान सम्मान निधि, सिंचाई की सुविधा और मनरेगा में पारदर्शी मजदूरी भुगतान।</p>
+            </div>
+          </div>
+
+          <div class="duty-card">
+            <div class="duty-num" style="background: #8b5cf6;">4</div>
+            <div class="duty-content">
+              <h3>सामाजिक न्याय</h3>
+              <p class="duty-summary" style="color: #7c3aed;">• सभी वर्गों के लिए समान अवसर • महिला/बुजुर्ग योजनाएं</p>
+              <p class="duty-desc">पेंशन योजनाओं का समय पर भुगतान, आवास योजना में निष्पक्षता, महिला स्वावलंबन और बिना भेदभाव के न्याय।</p>
+            </div>
+          </div>
+
+          <div class="duty-card">
+            <div class="duty-num" style="background: #06b6d4;">5</div>
+            <div class="duty-content">
+              <h3>डिजिटल और पारदर्शिता</h3>
+              <p class="duty-summary" style="color: #0891b2;">• ऑनलाइन शिकायतें, राशन, पेंशन • सभी जानकारी पारदर्शी करना</p>
+              <p class="duty-desc">पंचायत निधि के हर रुपये का खुला ऑडिट और घर बैठे सरकारी प्रमाण पत्र व शिकायत निवारण की ऑनलाइन सुविधा।</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="duty-pledge-banner">
+          <div style="font-size: 30px; margin-bottom: 10px;">🌾</div>
+          <h3>ग्राम विकास का संकल्प</h3>
+          <p>सरपंच का काम सिर्फ पद नहीं, जनिक सेवा है!</p>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           TAB 5: नागरिक शिकायतें एवं सुझाव (Complaints)
+           ==================================================== -->
+      <section id="section-complaints" class="admin-tab-section <%= activeTab === 'complaints' ? 'active' : '' %>">
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+          <div>
+            <h2 style="font-size: 22px; font-weight: 800; color: #1e293b;">📩 नागरिक शिकायतें एवं सुझाव प्रबंधन</h2>
+            <p style="font-size: 13.5px; color: #64748b;">ग्रामीणों द्वारा प्राप्त समस्याओं का ऑनलाइन निवारण एवं स्थिति प्रबंधन</p>
+          </div>
+
+          <button onclick="openAdminModal('newComplaintModal')" class="btn btn-primary btn-sm" style="background: #7c3aed;">
+            <i class="fa-solid fa-plus"></i> नई शिकायत दर्ज करें
+          </button>
+        </div>
+
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <div style="display: flex; gap: 8px;">
+              <button class="filter-tab complaint-filter-tab active" data-status="all">सभी (<%= complaints.length %>)</button>
+              <button class="filter-tab complaint-filter-tab" data-status="लंबित">लंबित</button>
+              <button class="filter-tab complaint-filter-tab" data-status="प्रगति पर">प्रगति पर</button>
+              <button class="filter-tab complaint-filter-tab" data-status="निस्तारित">निस्तारित</button>
+            </div>
+          </div>
+
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 70px;">आईडी</th>
+                <th>नागरिक</th>
+                <th>वार्ड / संपर्क</th>
+                <th>विषय एवं विवरण</th>
+                <th>दिनांक</th>
+                <th>स्थिति</th>
+                <th style="text-align: right;">एक्शन</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% complaints.forEach(comp => { %>
+                <% 
+                  let chipClass = 'amber';
+                  if (comp.status === 'निस्तारित') chipClass = 'green';
+                  if (comp.status === 'लंबित') chipClass = 'red';
+                %>
+                <tr class="complaint-row" data-status="<%= comp.status %>">
+                  <td><strong>#<%= comp.id %></strong></td>
+                  <td><strong><%= comp.name %></strong></td>
+                  <td style="font-size: 13px;">
+                    <%= comp.ward %><br>
+                    <span style="color: #64748b;"><%= comp.phone %></span>
+                  </td>
+                  <td>
+                    <div style="font-weight: 700; color: #1e293b;"><%= comp.subject %></div>
+                    <div style="font-size: 12.5px; color: #64748b; max-width: 300px;"><%= comp.message %></div>
+                    <% if (comp.reply) { %>
+                      <div style="margin-top: 6px; font-size: 12px; background: #f0fdf4; padding: 4px 8px; border-radius: 4px; color: #166534; border: 1px solid #bbf7d0;">
+                        <strong>निवारण:</strong> <%= comp.reply %>
+                      </div>
+                    <% } %>
+                  </td>
+                  <td style="font-size: 12.5px; color: #64748b;"><%= comp.date %></td>
+                  <td>
+                    <span class="status-chip <%= chipClass %>"><%= comp.status %></span>
+                  </td>
+                  <td style="text-align: right;">
+                    <button type="button" onclick="openReplyModal(<%= comp.id %>, '<%= comp.status %>', '<%= (comp.reply || '').replace(/'/g, "\\'") %>')" class="btn btn-outline btn-sm">
+                      <i class="fa-solid fa-reply"></i> स्थिति बदलें
+                    </button>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           TAB 6: विज़िटर एनालिटिक्स (Analytics)
+           ==================================================== -->
+      <section id="section-analytics" class="admin-tab-section <%= activeTab === 'analytics' ? 'active' : '' %>">
+        <div style="margin-bottom: 24px;">
+          <h2 style="font-size: 22px; font-weight: 800; color: #1e293b;">📈 विज़िटर एवं पोर्टल एनालिटिक्स</h2>
+          <p style="font-size: 13.5px; color: #64748b;">वेबसाइट ट्रैफिक, पृष्ठ उपयोगिता एवं नागरिक सहभागिता का ब्यौरा</p>
+        </div>
+
+        <div class="stats-cards-grid">
+          <div class="kpi-card">
+            <div class="kpi-title">कुल पोर्टल विज़िटर्स</div>
+            <div class="kpi-value"><%= stats.totalVisitors.toLocaleString('en-IN') %></div>
+            <div style="font-size: 12px; color: #15803d; margin-top: 6px;">+12% पिछले सप्ताह से</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">अद्वितीय (Unique) विज़िटर्स</div>
+            <div class="kpi-value"><%= stats.uniqueVisitors.toLocaleString('en-IN') %></div>
+            <div style="font-size: 12px; color: #15803d; margin-top: 6px;">+8% नए ग्रामीण</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">कुल पेज व्यूज</div>
+            <div class="kpi-value"><%= stats.pageViews.toLocaleString('en-IN') %></div>
+            <div style="font-size: 12px; color: #15803d; margin-top: 6px;">+15% वृद्धि</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-title">औसत समय</div>
+            <div class="kpi-value"><%= stats.avgDuration %> <span style="font-size: 14px;">मिनट</span></div>
+            <div style="font-size: 12px; color: #0284c7; margin-top: 6px;">सक्रिय जुड़ाव</div>
+          </div>
+        </div>
+
+        <div class="admin-card" style="padding: 24px;">
+          <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">लोकप्रिय पृष्ठ एवं विज़िटर प्रतिशत</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+            <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 13px; color: #64748b;">होम पेज</div>
+              <div style="font-size: 20px; font-weight: 800; color: #108e5e; margin: 4px 0;">28% (2,388 व्यूज)</div>
+            </div>
+            <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 13px; color: #64748b;">उम्मीदवार सूची व प्रोफाइल</div>
+              <div style="font-size: 20px; font-weight: 800; color: #3b82f6; margin: 4px 0;">22% (1,877 व्यूज)</div>
+            </div>
+            <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 13px; color: #64748b;">ग्राम विकास कार्य</div>
+              <div style="font-size: 20px; font-weight: 800; color: #f59e0b; margin: 4px 0;">18% (1,535 व्यूज)</div>
+            </div>
+            <div style="background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+              <div style="font-size: 13px; color: #64748b;">सरपंच के कर्तव्य व वादे</div>
+              <div style="font-size: 20px; font-weight: 800; color: #8b5cf6; margin: 4px 0;">12% (1,023 व्यूज)</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================================================
+           TAB 7: पंचायत सेटिंग्स (Settings)
+           ==================================================== -->
+      <section id="section-settings" class="admin-tab-section <%= activeTab === 'settings' ? 'active' : '' %>">
+        <div style="margin-bottom: 24px;">
+          <h2 style="font-size: 22px; font-weight: 800; color: #1e293b;">⚙️ ग्राम पंचायत सेटिंग्स</h2>
+          <p style="font-size: 13.5px; color: #64748b;">गाँव का नाम, आबादी, संपर्क विवरण एवं पोर्टल संदेश अद्यतन करें</p>
+        </div>
+
+        <div class="admin-card" style="padding: 28px; max-width: 800px;">
+          <form action="/api/settings" method="POST">
+            <div class="form-row">
+              <div class="form-group">
+                <label>ग्राम पंचायत का नाम *</label>
+                <input type="text" name="name" class="form-control" value="<%= villageInfo.name %>" required>
+              </div>
+              <div class="form-group">
+                <label>जिला *</label>
+                <input type="text" name="district" class="form-control" value="<%= villageInfo.district %>" required>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>राज्य *</label>
+                <input type="text" name="state" class="form-control" value="<%= villageInfo.state %>" required>
+              </div>
+              <div class="form-group">
+                <label>पिन कोड</label>
+                <input type="text" name="pincode" class="form-control" value="<%= villageInfo.pincode %>">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>कुल आबादी</label>
+                <input type="text" name="population" class="form-control" value="<%= villageInfo.population %>">
+              </div>
+              <div class="form-group">
+                <label>कुल परिवार</label>
+                <input type="text" name="families" class="form-control" value="<%= villageInfo.families %>">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>कुल वार्ड</label>
+                <input type="text" name="wards" class="form-control" value="<%= villageInfo.wards %>">
+              </div>
+              <div class="form-group">
+                <label>कृषि भूमि क्षेत्र</label>
+                <input type="text" name="landArea" class="form-control" value="<%= villageInfo.landArea %>">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>हेल्पलाइन फोन नंबर</label>
+                <input type="text" name="phone" class="form-control" value="<%= villageInfo.phone %>">
+              </div>
+              <div class="form-group">
+                <label>आधिकारिक ईमेल</label>
+                <input type="email" name="email" class="form-control" value="<%= villageInfo.email %>">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>पोर्टल स्लोगन</label>
+              <input type="text" name="slogan" class="form-control" value="<%= villageInfo.slogan %>">
+            </div>
+
+            <div class="form-group">
+              <label>गाँव के बारे में परिचय</label>
+              <textarea name="about" class="form-control" rows="3"><%= villageInfo.about %></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="border-radius: 8px; padding: 12px 28px;">
+              <i class="fa-solid fa-floppy-disk"></i> सेटिंग्स सहेजें
+            </button>
+          </form>
+        </div>
+
+        <!-- Dedicated Gram Sabha Form in Settings Tab -->
+        <div class="admin-card" style="padding: 28px; max-width: 800px; margin-top: 24px; border-left: 5px solid #108e5e;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin: 0;">🏛️ आगामी ग्राम सभा बैठक सूचना प्रबंधन</h3>
+              <p style="font-size: 13px; color: #64748b; margin-top: 4px;">होम पेज पर प्रसारित होने वाली बैठक की तारीख, समय, स्थान, एजेंडा एवं स्थिति अपडेट करें</p>
+            </div>
+            <span class="status-chip <%= (locals.gramSabha && gramSabha.active) ? 'green' : 'amber' %>">
+              <i class="fa-solid <%= (locals.gramSabha && gramSabha.active) ? 'fa-circle-check' : 'fa-circle-pause' %>"></i>
+              <%= (locals.gramSabha && gramSabha.status) ? gramSabha.status : 'सक्रिय सूचना' %>
+            </span>
+          </div>
+
+          <form action="/api/gram-sabha" method="POST">
+            <input type="hidden" name="redirectTab" value="settings">
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label>बैठक का शीर्षक *</label>
+                <input type="text" name="title" class="form-control" value="<%= (locals.gramSabha && gramSabha.title) ? gramSabha.title : 'आगामी ग्राम सभा खुली बैठक' %>" required>
+              </div>
+              <div class="form-group">
+                <label>बैठक की स्थिति *</label>
+                <select name="status" class="form-control" required>
+                  <option value="सक्रिय सूचना" <%= (locals.gramSabha && gramSabha.status === 'सक्रिय सूचना') ? 'selected' : '' %>>सक्रिय सूचना (प्रसारित)</option>
+                  <option value="स्थगित" <%= (locals.gramSabha && gramSabha.status === 'स्थगित') ? 'selected' : '' %>>स्थगित (Postponed)</option>
+                  <option value="सफलतापूर्वक संपन्न" <%= (locals.gramSabha && gramSabha.status === 'सफलतापूर्वक संपन्न') ? 'selected' : '' %>>सफलतापूर्वक संपन्न</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>बैठक की दिनांक *</label>
+                <input type="text" name="date" class="form-control" placeholder="उदा. 15 अगस्त 2024 या 26 जनवरी 2025" value="<%= (locals.gramSabha && gramSabha.date) ? gramSabha.date : '15 अगस्त 2024' %>" required>
+              </div>
+              <div class="form-group">
+                <label>बैठक का समय *</label>
+                <input type="text" name="time" class="form-control" placeholder="उदा. प्रातः 10:00 बजे" value="<%= (locals.gramSabha && gramSabha.time) ? gramSabha.time : 'प्रातः 10:00 बजे' %>" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>बैठक स्थल / स्थान *</label>
+              <input type="text" name="location" class="form-control" placeholder="उदा. ग्राम पंचायत भवन चौपाल (काकोड़ा)" value="<%= (locals.gramSabha && gramSabha.location) ? gramSabha.location : 'ग्राम पंचायत भवन चौपाल (काकोड़ा)' %>" required>
+            </div>
+
+            <div class="form-group">
+              <label>मुख्य विचारणीय एजेंडा *</label>
+              <input type="text" name="agenda" class="form-control" placeholder="उदा. जल निकासी नाली, अमृत सरोवर और नई स्ट्रीट लाइट योजना..." value="<%= (locals.gramSabha && gramSabha.agenda) ? gramSabha.agenda : '' %>" required>
+            </div>
+
+            <div class="form-group">
+              <label>विस्तृत सूचना संदेश</label>
+              <textarea name="description" class="form-control" rows="3"><%= (locals.gramSabha && gramSabha.description) ? gramSabha.description : '' %></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>मतदाताओं हेतु विशेष अपील / नोट</label>
+              <input type="text" name="notice" class="form-control" value="<%= (locals.gramSabha && gramSabha.notice) ? gramSabha.notice : '' %>">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                <input type="checkbox" name="active" value="true" <%= (locals.gramSabha && gramSabha.active) ? 'checked' : '' %> style="width: 18px; height: 18px; accent-color: #108e5e;">
+                <span style="font-weight: 600; color: #1e293b;">होम पेज पर लाइव प्रदर्शित करें</span>
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="background: #108e5e; border-radius: 8px; padding: 12px 28px;">
+              <i class="fa-solid fa-floppy-disk"></i> ग्राम सभा बैठक सहेजें
+            </button>
+          </form>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ====================================================
+       SCREEN 3: Candidate Profile Modal (Detailed View)
+       ==================================================== -->
+  <div id="candidateProfileModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 720px;">
+      <div class="modal-header">
+        <h3 id="modalCandProfileTitle">उम्मीदवार प्रोफाइल (स्क्रीन 3)</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('candidateProfileModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <div style="display: flex; align-items: center; gap: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 20px;">
+          <img id="modalCandPhoto" src="" alt="" style="width: 90px; height: 90px; border-radius: 50%; object-fit: cover; border: 3px solid #108e5e;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <h2 id="modalCandName" style="font-size: 22px; font-weight: 800; color: #1e293b;"></h2>
+              <span id="modalCandParty" class="party-badge bjp" style="margin: 0;"></span>
+            </div>
+            <p id="modalCandSlogan" style="font-size: 14px; color: #64748b; font-style: italic; margin-top: 4px;"></p>
+            <div style="display: flex; gap: 14px; font-size: 12.5px; color: #475569; margin-top: 8px;">
+              <span id="modalCandAge"></span>
+              <span id="modalCandEdu"></span>
+              <span id="modalCandVillage"></span>
+              <span id="modalCandPhone"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bio & Achievements -->
+        <div style="margin-bottom: 20px;">
+          <h4 style="font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 6px;">व्यक्तिगत परिचय</h4>
+          <p id="modalCandBio" style="font-size: 14px; color: #475569; line-height: 1.6;"></p>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <h4 style="font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">मुख्य उपलब्धियां</h4>
+          <ul id="modalCandAchievements" style="list-style: none; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; color: #334155;">
+          </ul>
+        </div>
+
+        <div>
+          <h4 style="font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">गाँव के लिए मुख्य संकल्प</h4>
+          <div id="modalCandPromises" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+
+        <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+          <button id="modalPledgeBtn" class="btn btn-primary" onclick="pledgeSupportModal()">
+            <i class="fa-solid fa-hand-holding-heart"></i> समर्थन दर्ज करें
+          </button>
+          <div style="font-size: 13px; color: #64748b;">
+            वर्तमान समर्थन: <strong id="modalCandVotes" style="color: #108e5e; font-size: 16px;">0</strong> ग्रामवासी
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================
+       SCREEN 4: Work Detail Modal (Detailed Specs & Finance)
+       ==================================================== -->
+  <div id="workDetailModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 760px;">
+      <div class="modal-header">
+        <h3 id="modalWorkHeader">कार्य विवरण (स्क्रीन 4)</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('workDetailModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <div style="position: relative; height: 180px; border-radius: 10px; overflow: hidden; margin-bottom: 20px; cursor: pointer;" onclick="openImageLightbox(document.getElementById('modalWorkImage').src, document.getElementById('modalWorkHeader').textContent)" title="क्लिक करके पूरी फोटो देखें">
+          <img id="modalWorkImage" src="" alt="" style="width: 100%; height: 100%; object-fit: cover;">
+          <div style="position: absolute; top: 12px; right: 12px; background: rgba(15, 23, 42, 0.8); color: white; padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600; backdrop-filter: blur(4px); display: flex; align-items: center; gap: 6px; border: 1px solid rgba(255,255,255,0.2);">
+            <i class="fa-solid fa-magnifying-glass-plus" style="color: #38bdf8;"></i> पूरी फोटो देखें
+          </div>
+          <div style="position: absolute; bottom: 12px; left: 16px; background: rgba(0,0,0,0.7); padding: 4px 12px; border-radius: 999px; color: white; font-size: 12px;">
+            <span id="modalWorkScheme"></span>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+          <!-- Specs -->
+          <div>
+            <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 10px;">कार्य का विवरण</h4>
+            <table class="specs-table">
+              <tr>
+                <td class="label">कार्य प्रारंभ:</td>
+                <td id="modalWorkStart"></td>
+              </tr>
+              <tr>
+                <td class="label">कार्य पूर्ण:</td>
+                <td id="modalWorkEnd"></td>
+              </tr>
+              <tr>
+                <td class="label">माप / लंबाई:</td>
+                <td id="modalWorkLength"></td>
+              </tr>
+              <tr>
+                <td class="label">ठेकेदार:</td>
+                <td id="modalWorkContractor"></td>
+              </tr>
+            </table>
+          </div>
+
+          <!-- Financials (Screen 4) -->
+          <div class="financial-box">
+            <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 10px;">वित्तीय जानकारी (Screen 4)</h4>
+            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+              <span>कुल स्वीकृत राशि:</span>
+              <strong id="modalWorkBudget"></strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+              <span>कुल खर्च राशि:</span>
+              <strong id="modalWorkSpent" style="color: #108e5e;"></strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 13px; border-top: 1px solid #e2e8f0; padding-top: 6px;">
+              <span>शेष राशि:</span>
+              <strong id="modalWorkBalance" style="color: #0284c7;"></strong>
+            </div>
+
+            <div style="margin-top: 14px;">
+              <div style="display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 2px;">
+                <span>कार्य स्थिति</span>
+                <span id="modalWorkProgressText" style="font-weight: 700;"></span>
+              </div>
+              <div class="progress-bar-wrap" style="height: 8px; margin: 0;">
+                <div id="modalWorkProgressBar" class="progress-bar-fill"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-size: 13.5px; color: #475569; background: #f8fafc; padding: 12px; border-radius: 8px; margin-bottom: 20px;">
+          <strong>विवरण:</strong> <span id="modalWorkDesc"></span>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; gap: 12px;">
+          <a href="/api/export/works.csv" class="btn btn-primary btn-sm">
+            <i class="fa-solid fa-file-arrow-down"></i> संबंधित दस्तावेज डाउनलोड करें
+          </a>
+          <button onclick="closeAdminModal('workDetailModal')" class="btn btn-outline btn-sm">
+            बंद करें
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====================================================
+       Modal: आगामी ग्राम सभा बैठक विवरण संपादित करें
+       ==================================================== -->
+  <div id="editGramSabhaModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 640px;">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 36px; height: 36px; background: #e8f5ee; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #108e5e; font-size: 18px;">
+            <i class="fa-solid fa-bullhorn"></i>
+          </div>
+          <h3 style="margin: 0; font-size: 18px;">आगामी ग्राम सभा बैठक विवरण संपादित करें</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closeAdminModal('editGramSabhaModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 24px;">
+        <form action="/api/gram-sabha" method="POST">
+          <input type="hidden" name="redirectTab" value="dashboard">
+          
+          <div class="form-row">
+            <div class="form-group">
+              <label>बैठक का शीर्षक *</label>
+              <input type="text" name="title" class="form-control" value="<%= (locals.gramSabha && gramSabha.title) ? gramSabha.title : 'आगामी ग्राम सभा खुली बैठक' %>" required>
+            </div>
+            <div class="form-group">
+              <label>बैठक की स्थिति *</label>
+              <select name="status" class="form-control" required>
+                <option value="सक्रिय सूचना" <%= (locals.gramSabha && gramSabha.status === 'सक्रिय सूचना') ? 'selected' : '' %>>सक्रिय सूचना (प्रसारित)</option>
+                <option value="स्थगित" <%= (locals.gramSabha && gramSabha.status === 'स्थगित') ? 'selected' : '' %>>स्थगित (Postponed)</option>
+                <option value="सफलतापूर्वक संपन्न" <%= (locals.gramSabha && gramSabha.status === 'सफलतापूर्वक संपन्न') ? 'selected' : '' %>>सफलतापूर्वक संपन्न</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>बैठक की दिनांक *</label>
+              <input type="text" name="date" class="form-control" placeholder="उदा. 15 अगस्त 2024 या 26 जनवरी 2025" value="<%= (locals.gramSabha && gramSabha.date) ? gramSabha.date : '15 अगस्त 2024' %>" required>
+            </div>
+            <div class="form-group">
+              <label>बैठक का समय *</label>
+              <input type="text" name="time" class="form-control" placeholder="उदा. प्रातः 10:00 बजे" value="<%= (locals.gramSabha && gramSabha.time) ? gramSabha.time : 'प्रातः 10:00 बजे' %>" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>बैठक स्थल / स्थान *</label>
+            <input type="text" name="location" class="form-control" placeholder="उदा. ग्राम पंचायत भवन चौपाल (काकोड़ा)" value="<%= (locals.gramSabha && gramSabha.location) ? gramSabha.location : 'ग्राम पंचायत भवन चौपाल (काकोड़ा)' %>" required>
+          </div>
+
+          <div class="form-group">
+            <label>मुख्य विचारणीय एजेंडा *</label>
+            <input type="text" name="agenda" class="form-control" placeholder="उदा. जल निकासी नाली, अमृत सरोवर और नई स्ट्रीट लाइट योजना..." value="<%= (locals.gramSabha && gramSabha.agenda) ? gramSabha.agenda : '' %>" required>
+          </div>
+
+          <div class="form-group">
+            <label>विस्तृत सूचना संदेश</label>
+            <textarea name="description" class="form-control" rows="3"><%= (locals.gramSabha && gramSabha.description) ? gramSabha.description : '' %></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>मतदाताओं हेतु विशेष अपील / नोट</label>
+            <input type="text" name="notice" class="form-control" value="<%= (locals.gramSabha && gramSabha.notice) ? gramSabha.notice : '' %>">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+              <input type="checkbox" name="active" value="true" <%= (locals.gramSabha && gramSabha.active) ? 'checked' : '' %> style="width: 18px; height: 18px; accent-color: #108e5e;">
+              <span style="font-weight: 600; color: #1e293b;">होम पेज पर लाइव प्रदर्शित करें</span>
+            </label>
+          </div>
+
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button type="button" onclick="closeAdminModal('editGramSabhaModal')" class="btn btn-outline">रद्द करें</button>
+            <button type="submit" class="btn btn-primary" style="background: #108e5e; border-radius: 8px;">
+              <i class="fa-solid fa-floppy-disk"></i> सुरक्षित करें (Save Changes)
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: नया कार्य जोड़ें -->
+  <div id="addWorkModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>🏗️ नया ग्राम विकास कार्य जोड़ें (स्क्रीन 8)</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('addWorkModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form action="/api/works" method="POST" enctype="multipart/form-data">
+          <div class="form-group">
+            <label>कार्य का नाम *</label>
+            <input type="text" name="title" class="form-control" placeholder="उदा. मुख्य सड़क का निर्माण" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>योजना का नाम *</label>
+              <input type="text" name="scheme" class="form-control" placeholder="उदा. प्रधानमंत्री ग्रामीण सड़क योजना" required>
+            </div>
+            <div class="form-group">
+              <label>कार्य श्रेणी</label>
+              <select name="category" class="form-control">
+                <option value="सड़क">सड़क निर्माण</option>
+                <option value="पेयजल">पेयजल</option>
+                <option value="शिक्षा">शिक्षा भवन</option>
+                <option value="बिजली">स्ट्रीट लाइट</option>
+                <option value="पर्यावरण">तालाब</option>
+                <option value="भवन">सामुदायिक भवन</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>कुल बजट (₹) *</label>
+              <input type="number" id="workBudgetInput" name="budget" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>खर्च राशि (₹)</label>
+              <input type="number" id="workSpentInput" name="spent" class="form-control" value="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>स्थिति *</label>
+              <select name="status" class="form-control">
+                <option value="पूर्ण">पूर्ण</option>
+                <option value="चालू" selected>चालू</option>
+                <option value="आगामी">आगामी</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>प्रगति (%)</label>
+              <input type="number" name="progress" class="form-control" min="0" max="100" value="50">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>माप / लंबाई</label>
+              <input type="text" name="length" class="form-control" placeholder="उदा. 1.2 किमी">
+            </div>
+            <div class="form-group">
+              <label>ठेकेदार</label>
+              <input type="text" name="contractor" class="form-control" placeholder="उदा. शिवम कंस्ट्रक्शन">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>कार्य की फोटो अपलोड करें 📁</label>
+              <input type="file" name="imageFile" class="form-control" accept="image/*">
+            </div>
+            <div class="form-group">
+              <label>या तस्वीर URL (वैकल्पिक)</label>
+              <input type="url" name="imageUrl" class="form-control" placeholder="https://images.unsplash.com/...">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>विवरण</label>
+            <textarea name="description" class="form-control" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i class="fa-solid fa-check"></i> कार्य सुरक्षित करें
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: कार्य एडिट करें -->
+  <div id="editWorkModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>✏️ कार्य संपादित करें</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('editWorkModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editWorkForm" method="POST" enctype="multipart/form-data">
+          <div class="form-group">
+            <label>कार्य का नाम *</label>
+            <input type="text" id="editWorkTitle" name="title" class="form-control" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>योजना *</label>
+              <input type="text" id="editWorkScheme" name="scheme" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>श्रेणी</label>
+              <input type="text" id="editWorkCategory" name="category" class="form-control">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>स्वीकृत बजट (₹) *</label>
+              <input type="number" id="editWorkBudget" name="budget" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>खर्च राशि (₹)</label>
+              <input type="number" id="editWorkSpent" name="spent" class="form-control">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>स्थिति</label>
+              <select id="editWorkStatus" name="status" class="form-control">
+                <option value="पूर्ण">पूर्ण</option>
+                <option value="चालू">चालू</option>
+                <option value="आगामी">आगामी</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>प्रगति (%)</label>
+              <input type="number" id="editWorkProgress" name="progress" class="form-control" min="0" max="100">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>माप</label>
+              <input type="text" id="editWorkLength" name="length" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>ठेकेदार</label>
+              <input type="text" id="editWorkContractor" name="contractor" class="form-control">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>नई तस्वीर अपलोड करें 📁</label>
+              <input type="file" name="imageFile" class="form-control" accept="image/*">
+            </div>
+            <div class="form-group">
+              <label>या तस्वीर URL</label>
+              <input type="url" id="editWorkImage" name="imageUrl" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>विवरण</label>
+            <textarea id="editWorkDescription" name="description" class="form-control" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i class="fa-solid fa-floppy-disk"></i> परिवर्तन सहेजें
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: नया उम्मीदवार जोड़ें -->
+  <div id="addCandidateModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3>👤 नया उम्मीदवार जोड़ें</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('addCandidateModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form action="/api/candidates" method="POST" enctype="multipart/form-data">
+          <div class="form-row">
+            <div class="form-group">
+              <label>नाम *</label>
+              <input type="text" name="name" class="form-control" placeholder="उदा. रामलाल सिंह" required>
+            </div>
+            <div class="form-group">
+              <label>पार्टी / दल *</label>
+              <input type="text" name="party" class="form-control" placeholder="उदा. भारतीय जनता पार्टी / निर्दलीय" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>पार्टी कोड (उदा. BJP, INC, AAP, IND)</label>
+              <input type="text" name="partyBadge" class="form-control" placeholder="BJP">
+            </div>
+            <div class="form-group">
+              <label>वार्ड</label>
+              <input type="text" name="ward" class="form-control" placeholder="वार्ड 1">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>आयु</label>
+              <input type="number" name="age" class="form-control" value="40">
+            </div>
+            <div class="form-group">
+              <label>शिक्षा</label>
+              <input type="text" name="education" class="form-control" placeholder="उदा. स्नातक (कला)">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>गाँव / निवास</label>
+              <input type="text" name="village" class="form-control" placeholder="उदा. रामपुर खुर्द">
+            </div>
+            <div class="form-group">
+              <label>फोन नंबर</label>
+              <input type="text" name="phone" class="form-control" placeholder="उदा. +91 98765 43210">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>स्लोगन</label>
+            <input type="text" name="slogan" class="form-control" placeholder="गाँव का विकास, सबका साथ">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>उम्मीदवार की फोटो अपलोड करें 📁</label>
+              <input type="file" name="photoFile" class="form-control" accept="image/*">
+            </div>
+            <div class="form-group">
+              <label>या फोटो URL (वैकल्पिक)</label>
+              <input type="url" name="photoUrl" class="form-control" placeholder="https://images.unsplash.com/...">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>परिचय (Bio)</label>
+            <textarea name="bio" class="form-control" rows="2" placeholder="उम्मीदवार के बारे में संक्षिप्त परिचय..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>प्रमुख उपलब्धियां (प्रति पंक्ति एक उपलब्धि)</label>
+            <textarea name="achievements" class="form-control" rows="2" placeholder="उदा. 15 वर्ष से सामाजिक कार्यों में सक्रिय&#10;गाँव में शुद्ध पेयजल व्यवस्था"></textarea>
+          </div>
+          <div class="form-group">
+            <label>चुनावी संकल्प / वादे (प्रति पंक्ति एक संकल्प)</label>
+            <textarea name="promises" class="form-control" rows="2" placeholder="उदा. हर घर नल से जल योजना&#10;गाँव की सभी गलियों में सोलर लाइट"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i class="fa-solid fa-check"></i> उम्मीदवार जोड़ें
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: उम्मीदवार एडिट करें -->
+  <div id="editCandidateModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 650px;">
+      <div class="modal-header">
+        <h3>✏️ उम्मीदवार संपादित करें</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('editCandidateModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editCandidateForm" method="POST" enctype="multipart/form-data">
+          <div class="form-row">
+            <div class="form-group">
+              <label>नाम *</label>
+              <input type="text" id="editCandName" name="name" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>पार्टी *</label>
+              <input type="text" id="editCandParty" name="party" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>पार्टी कोड</label>
+              <input type="text" id="editCandPartyBadge" name="partyBadge" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>वार्ड</label>
+              <input type="text" id="editCandWard" name="ward" class="form-control">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>आयु</label>
+              <input type="number" id="editCandAge" name="age" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>शिक्षा</label>
+              <input type="text" id="editCandEducation" name="education" class="form-control">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>गाँव / निवास</label>
+              <input type="text" id="editCandVillage" name="village" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>फोन नंबर</label>
+              <input type="text" id="editCandPhone" name="phone" class="form-control">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>स्लोगन</label>
+              <input type="text" id="editCandSlogan" name="slogan" class="form-control">
+            </div>
+            <div class="form-group" style="background: #fff1f2; border: 1px solid #fecdd3; padding: 6px 12px; border-radius: 8px;">
+              <label style="color: #be123c; font-weight: 700; font-size: 13px; margin-bottom: 3px;">❤️ जन समर्थन संख्या (Votes)</label>
+              <input type="number" id="editCandVotes" name="votes" class="form-control" min="0" style="font-weight: 700; color: #be123c;">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>नई फोटो अपलोड करें 📁</label>
+              <input type="file" name="photoFile" class="form-control" accept="image/*">
+            </div>
+            <div class="form-group">
+              <label>या फोटो URL</label>
+              <input type="url" id="editCandPhoto" name="photoUrl" class="form-control">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>परिचय</label>
+            <textarea id="editCandBio" name="bio" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label>प्रमुख उपलब्धियां (प्रति पंक्ति एक उपलब्धि)</label>
+            <textarea id="editCandAchievements" name="achievements" class="form-control" rows="2"></textarea>
+          </div>
+          <div class="form-group">
+            <label>चुनावी संकल्प / वादे (प्रति पंक्ति एक संकल्प)</label>
+            <textarea id="editCandPromises" name="promises" class="form-control" rows="2"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i class="fa-solid fa-floppy-disk"></i> परिवर्तन सहेजें
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: शिकायत स्थिति बदलें -->
+  <div id="replyComplaintModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 480px;">
+      <div class="modal-header">
+        <h3>📝 शिकायत निस्तारण व स्थिति</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('replyComplaintModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="replyComplaintForm" method="POST">
+          <div class="form-group">
+            <label>वर्तमान स्थिति बदलें</label>
+            <select id="modalComplaintStatus" name="status" class="form-control" required>
+              <option value="लंबित">लंबित (Pending)</option>
+              <option value="प्रगति पर">प्रगति पर (In Progress)</option>
+              <option value="निस्तारित">निस्तारित (Resolved)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>कार्यालय की टिप्पणी / निवारण रिपोर्ट</label>
+            <textarea id="modalComplaintReply" name="reply" class="form-control" rows="3" placeholder="उदा. समस्या का निवारण कर दिया गया है..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i class="fa-solid fa-check"></i> अपडेट करें
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: नई शिकायत दर्ज करें -->
+  <div id="newComplaintModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3>✍️ नई नागरिक शिकायत दर्ज करें</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('newComplaintModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form action="/api/complaint" method="POST" onsubmit="handleAdminComplaintSubmit(event, this)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>नागरिक का नाम *</label>
+              <input type="text" name="name" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>मोबाइल नंबर *</label>
+              <input type="tel" name="phone" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>वार्ड</label>
+              <input type="text" name="ward" class="form-control" value="वार्ड 1">
+            </div>
+            <div class="form-group">
+              <label>विषय *</label>
+              <input type="text" name="subject" class="form-control" placeholder="उदा. नाली की सफाई" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>समस्या विवरण *</label>
+            <textarea name="message" class="form-control" rows="3" required></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i class="fa-solid fa-paper-plane"></i> शिकायत दर्ज करें
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+  <script src="/js/main.js"></script>
+  <script>
+    // Unified SPA Tab Switcher inside single Admin URL
+    function switchTab(tabName) {
+      document.querySelectorAll('.admin-nav-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.admin-tab-section').forEach(s => s.classList.remove('active'));
+
+      const activeNav = document.querySelector(`.admin-nav-tab[data-tab="${tabName}"]`);
+      if (activeNav) activeNav.classList.add('active');
+
+      const targetSection = document.getElementById(`section-${tabName}`);
+      if (targetSection) targetSection.classList.add('active');
+
+      // Update Topbar Title
+      const titles = {
+        'dashboard': 'डैशबोर्ड - ग्राम पंचायत प्रबंधन (स्क्रीन 7)',
+        'candidates': 'सरपंच पद के उम्मीदवार सूची व प्रोफाइल (स्क्रीन 2 & 3)',
+        'works': 'ग्राम विकास कार्य प्रबंधन व गैलरी (स्क्रीन 8, 5 & 4)',
+        'duties': 'सरपंच के कर्तव्य व भविष्य योजना (स्क्रीन 6)',
+        'complaints': 'नागरिक शिकायतें एवं सुझाव प्रबंधन',
+        'analytics': 'विज़िटर एनालिटिक्स व ट्रैफ़िक रिपोर्ट',
+        'settings': 'ग्राम पंचायत सेटिंग्स व प्रोफाइल'
+      };
+      const titleElem = document.getElementById('topbarTitle');
+      if (titleElem && titles[tabName]) {
+        titleElem.textContent = titles[tabName];
+      }
+
+      window.history.replaceState(null, '', `/admin?tab=${tabName}`);
+    }
+
+    // Attach click events to sidebar tabs
+    document.querySelectorAll('.admin-nav-tab').forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tabName = tab.getAttribute('data-tab');
+        switchTab(tabName);
+      });
+    });
+
+    // Check URL query param or hash on initial load
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paramTab = urlParams.get('tab');
+      const hashTab = window.location.hash.replace('#', '');
+      const initialTab = paramTab || hashTab;
+      if (initialTab && document.getElementById(`section-${initialTab}`)) {
+        switchTab(initialTab);
+      }
+      
+      // Toast for saved state
+      if (urlParams.get('saved') === 'gram_sabha') {
+        if (typeof showToast === 'function') {
+          showToast('🏛️ आगामी ग्राम सभा बैठक सूचना सफलतापूर्वक अपडेट हो गई!');
+        } else {
+          alert('आगामी ग्राम सभा बैठक सूचना सफलतापूर्वक अपडेट हो गई!');
+        }
+      } else if (urlParams.get('saved') === '1') {
+        if (typeof showToast === 'function') {
+          showToast('सेटिंग्स सफलतापूर्वक सहेज ली गई हैं!');
+        }
+      }
+    });
+
+    // Toggle Works view between Table (Screen 8) and Cards (Screen 5)
+    function toggleWorksView(viewType) {
+      const tableView = document.getElementById('worksTableView');
+      const cardsView = document.getElementById('worksCardsView');
+      const btnTable = document.getElementById('btnViewTable');
+      const btnCards = document.getElementById('btnViewCards');
+
+      if (viewType === 'cards') {
+        tableView.style.display = 'none';
+        cardsView.style.display = 'block';
+        btnTable.classList.remove('active');
+        btnTable.style.background = 'white';
+        btnTable.style.color = '#334155';
+        btnCards.classList.add('active');
+        btnCards.style.background = '#108e5e';
+        btnCards.style.color = 'white';
+      } else {
+        tableView.style.display = 'block';
+        cardsView.style.display = 'none';
+        btnCards.classList.remove('active');
+        btnCards.style.background = 'white';
+        btnCards.style.color = '#334155';
+        btnTable.classList.add('active');
+        btnTable.style.background = '#108e5e';
+        btnTable.style.color = 'white';
+      }
+    }
+
+    // Active candidate profile modal (Screen 3)
+    let activeCandId = null;
+    function viewCandidateProfile(cand) {
+      activeCandId = cand.id;
+      document.getElementById('modalCandPhoto').src = cand.photo || '';
+      document.getElementById('modalCandName').textContent = cand.name;
+      document.getElementById('modalCandParty').textContent = cand.party;
+      document.getElementById('modalCandParty').className = `party-badge ${cand.partyBadge.toLowerCase()}`;
+      document.getElementById('modalCandSlogan').textContent = `"${cand.slogan}"`;
+      document.getElementById('modalCandAge').textContent = `आयु: ${cand.age} वर्ष`;
+      document.getElementById('modalCandEdu').textContent = `शिक्षा: ${cand.education}`;
+      document.getElementById('modalCandVillage').textContent = `गाँव: ${cand.village} (${cand.ward})`;
+      document.getElementById('modalCandPhone').textContent = `फोन: ${cand.phone}`;
+      document.getElementById('modalCandBio').textContent = cand.bio;
+      document.getElementById('modalCandVotes').textContent = cand.votes;
+
+      // Achievements list
+      const achUl = document.getElementById('modalCandAchievements');
+      achUl.innerHTML = '';
+      (cand.achievements || []).forEach(ach => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span style="color: #108e5e; font-weight: bold; margin-right: 6px;">✓</span> ${ach}`;
+        achUl.appendChild(li);
+      });
+
+      // Promises list
+      const promDiv = document.getElementById('modalCandPromises');
+      promDiv.innerHTML = '';
+      (cand.promises || []).forEach((p, idx) => {
+        const item = document.createElement('div');
+        item.style = 'background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 13px; display: flex; align-items: center; gap: 10px;';
+        item.innerHTML = `<span style="width: 22px; height: 22px; background: #108e5e; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; flex-shrink: 0;">${idx+1}</span> <span>${p}</span>`;
+        promDiv.appendChild(item);
+      });
+
+      openAdminModal('candidateProfileModal');
+    }
+
+    async function pledgeSupportModal() {
+      if (!activeCandId) return;
+      const res = await fetch(`/api/vote/${activeCandId}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('modalCandVotes').textContent = data.votes;
+        const btn = document.getElementById('modalPledgeBtn');
+        btn.innerHTML = `<i class="fa-solid fa-check"></i> समर्थन दर्ज! (${data.votes})`;
+        btn.style.background = '#f97316';
+        alert('समर्थन सफलतापूर्वक दर्ज हो गया!');
+      }
+    }
+
+    // Active Work Detail modal (Screen 4)
+    function viewWorkDetail(work) {
+      document.getElementById('modalWorkHeader').textContent = `${work.title} - कार्य विवरण (स्क्रीन 4)`;
+      document.getElementById('modalWorkImage').src = work.image || '';
+      document.getElementById('modalWorkScheme').textContent = work.scheme;
+      document.getElementById('modalWorkStart').textContent = work.startDate || '15 मार्च 2023';
+      document.getElementById('modalWorkEnd').textContent = work.endDate || '10 जून 2024';
+      document.getElementById('modalWorkLength').textContent = work.length || '1.2 किमी';
+      document.getElementById('modalWorkContractor').textContent = work.contractor || 'शिवम कंस्ट्रक्शन';
+      document.getElementById('modalWorkBudget').textContent = '₹' + (work.budget || 0).toLocaleString('en-IN');
+      document.getElementById('modalWorkSpent').textContent = '₹' + (work.spent || 0).toLocaleString('en-IN');
+      document.getElementById('modalWorkBalance').textContent = '₹' + (work.balance || 0).toLocaleString('en-IN');
+      document.getElementById('modalWorkProgressText').textContent = `${work.progress || 0}% पूर्ण`;
+      document.getElementById('modalWorkProgressBar').style.width = `${work.progress || 0}%`;
+      document.getElementById('modalWorkDesc').textContent = work.description || 'गाँव की मुख्य सड़क एवं जल निकासी नाली का पक्का निर्माण।';
+
+      openAdminModal('workDetailModal');
+    }
+
+    // Complaint status update modal
+    function openReplyModal(id, status, reply) {
+      const form = document.getElementById('replyComplaintForm');
+      form.action = `/api/complaints/${id}/status`;
+      document.getElementById('modalComplaintStatus').value = status;
+      document.getElementById('modalComplaintReply').value = reply || '';
+      openAdminModal('replyComplaintModal');
+    }
+
+    // Complaint filter
+    document.querySelectorAll('.complaint-filter-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.complaint-filter-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const st = tab.getAttribute('data-status');
+        document.querySelectorAll('.complaint-row').forEach(row => {
+          if (st === 'all' || row.getAttribute('data-status') === st) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Handle AJAX complaint submission from inside admin
+    async function handleAdminComplaintSubmit(e, form) {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const res = await fetch('/api/complaint', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.fromEntries(formData.entries()))
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(data.message);
+        window.location.href = '/admin?tab=complaints';
+      }
+    }
+
+    // Reset Candidate Support (Votes) to 0
+    async function resetSupportVotes() {
+      if (!confirm('क्या आप सचमुच सभी उम्मीदवारों का जन समर्थन रीसेट करके 0 (शून्य) करना चाहते हैं?')) return;
+      try {
+        const res = await fetch('/api/votes/reset', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('सफलता: सभी उम्मीदवारों का जन समर्थन 0 कर दिया गया है!');
+          window.location.reload();
+        } else {
+          alert('त्रुटि: समर्थन रीसेट नहीं हो सका।');
+        }
+      } catch (err) {
+        console.error('Reset votes error:', err);
+        alert('सर्वर से संपर्क करने में समस्या हुई।');
+      }
+    }
+  </script>
+
+  <!-- Image Lightbox Modal for Full View in Admin -->
+  <div id="imageLightboxModal" class="image-lightbox-overlay" onclick="handleLightboxBackdropClick(event)">
+    <div class="image-lightbox-wrapper" onclick="event.stopPropagation()">
+      <div class="image-lightbox-header">
+        <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+          <div style="width: 32px; height: 32px; background: rgba(56, 189, 248, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #38bdf8; flex-shrink: 0;">
+            <i class="fa-solid fa-image"></i>
+          </div>
+          <span id="imageLightboxTitle" class="image-lightbox-title">दस्तावेज / फोटो पूर्वावलोकन</span>
+        </div>
+        <div class="image-lightbox-actions">
+          <button type="button" class="lightbox-btn" onclick="toggleLightboxZoom(event)" title="ज़ूम इन / आउट">
+            <i id="lightboxZoomIcon" class="fa-solid fa-magnifying-glass-plus"></i>
+          </button>
+          <a id="imageLightboxDownload" href="#" target="_blank" download class="lightbox-btn" title="डाउनलोड / नया टैब">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </a>
+          <button type="button" class="lightbox-btn close-btn" onclick="closeImageLightbox()" title="बंद करें (Esc)">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+      <div class="image-lightbox-body" onclick="toggleLightboxZoom(event)">
+        <img id="imageLightboxImg" src="" alt="पूर्वावलोकन" style="cursor: zoom-in;" title="क्लिक करके ज़ूम करें">
+      </div>
+      <div id="imageLightboxMeta" class="image-lightbox-meta" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 12px;">
+            <div style="width: 36px; height: 36px; background: #108e5e; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+              <i class="fa-solid fa-seedling"></i>
+            </div>
+            <h3 style="margin: 0; color: white;">मेरा गाँव</h3>
+          </div>
+          <p style="margin-bottom: 16px;">डिजिटल भारत मिशन के अंतर्गत ग्राम पंचायत को पारदर्शी, सशक्त और जन-जन से जोड़ने का एक साझा मंच।</p>
+          <div style="display: flex; gap: 12px; font-size: 16px;">
+            <a href="#" style="color: #94a3b8;"><i class="fa-brands fa-facebook"></i></a>
+            <a href="#" style="color: #94a3b8;"><i class="fa-brands fa-twitter"></i></a>
+            <a href="#" style="color: #94a3b8;"><i class="fa-brands fa-youtube"></i></a>
+            <a href="#" style="color: #94a3b8;"><i class="fa-brands fa-whatsapp"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-col">
+          <h4>महत्वपूर्ण लिंक</h4>
+          <ul class="footer-links">
+            <li><a href="/">होम पेज</a></li>
+            <li><a href="/candidates">उम्मीदवार सूची</a></li>
+            <li><a href="/works">विकास कार्य</a></li>
+            <li><a href="/duties">सरपंच के कर्तव्य</a></li>
+            <li><a href="/complaint">शिकायत दर्ज करें</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>सरकारी पोर्टल</h4>
+          <ul class="footer-links">
+            <li><a href="https://panchayat.gov.in" target="_blank" rel="noopener">पंचायती राज मंत्रालय</a></li>
+            <li><a href="https://pmayg.nic.in" target="_blank" rel="noopener">प्रधानमंत्री आवास योजना</a></li>
+            <li><a href="https://nrega.nic.in" target="_blank" rel="noopener">मनरेगा पोर्टल</a></li>
+            <li><a href="https://jaljeevanmission.gov.in" target="_blank" rel="noopener">जल जीवन मिशन</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4>पंचायत कार्यालय</h4>
+          <p style="font-size: 13.5px; margin-bottom: 8px;"><i class="fa-solid fa-location-dot"></i> <%= villageInfo.name %>, <%= villageInfo.district %>, <%= villageInfo.state %></p>
+          <p style="font-size: 13.5px; margin-bottom: 8px;"><i class="fa-solid fa-phone"></i> <%= villageInfo.phone %></p>
+          <p style="font-size: 13.5px; margin-bottom: 8px;"><i class="fa-solid fa-envelope"></i> <%= villageInfo.email %></p>
+          <div style="margin-top: 12px; font-size: 12.5px; color: #94a3b8;">
+            <i class="fa-regular fa-clock"></i> कार्यालय समय: 10:00 AM - 05:00 PM
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p>© 2026 मेरा गाँव. सभी अधिकार सुरक्षित।</p>
+        <p>डिज़ाइन एवं विकास: ग्राम पंचायत डिजिटल टीम</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Image Lightbox Modal for Full View -->
+  <div id="imageLightboxModal" class="image-lightbox-overlay" onclick="handleLightboxBackdropClick(event)">
+    <div class="image-lightbox-wrapper" onclick="event.stopPropagation()">
+      <div class="image-lightbox-header">
+        <div style="display: flex; align-items: center; gap: 10px; overflow: hidden;">
+          <div style="width: 32px; height: 32px; background: rgba(56, 189, 248, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #38bdf8; flex-shrink: 0;">
+            <i class="fa-solid fa-image"></i>
+          </div>
+          <span id="imageLightboxTitle" class="image-lightbox-title">दस्तावेज / फोटो पूर्वावलोकन</span>
+        </div>
+        <div class="image-lightbox-actions">
+          <button type="button" class="lightbox-btn" onclick="toggleLightboxZoom(event)" title="ज़ूम इन / आउट">
+            <i id="lightboxZoomIcon" class="fa-solid fa-magnifying-glass-plus"></i>
+          </button>
+          <a id="imageLightboxDownload" href="#" target="_blank" download class="lightbox-btn" title="डाउनलोड / नया टैब">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </a>
+          <button type="button" class="lightbox-btn close-btn" onclick="closeImageLightbox()" title="बंद करें (Esc)">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+      <div class="image-lightbox-body" onclick="toggleLightboxZoom(event)">
+        <img id="imageLightboxImg" src="" alt="पूर्वावलोकन" style="cursor: zoom-in;" title="क्लिक करके ज़ूम करें">
+      </div>
+      <div id="imageLightboxMeta" class="image-lightbox-meta" style="display: none;"></div>
+    </div>
+  </div>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>

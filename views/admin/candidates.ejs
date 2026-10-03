@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %></title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="admin-body">
+
+  <%- include('../partials/admin-sidebar') %>
+
+  <div class="admin-main">
+    <%- include('../partials/admin-topbar') %>
+
+    <main class="admin-content">
+
+      <!-- Header Row -->
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+        <div>
+          <h1 style="font-size: 22px; font-weight: 800; color: #1e293b;">सरपंच पद के उम्मीदवार प्रबंधन</h1>
+          <p style="font-size: 13.5px; color: #64748b;">चुनाव प्रत्याशियों की प्रोफाइल, घोषणापत्र एवं समर्थन का प्रबंधन</p>
+        </div>
+
+        <button onclick="openAdminModal('addCandidateModal')" class="btn btn-primary" style="background: #108e5e; border-radius: 8px;">
+          <i class="fa-solid fa-user-plus"></i> नया उम्मीदवार जोड़ें
+        </button>
+      </div>
+
+      <!-- Candidates Table Card -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3 style="font-size: 16px; font-weight: 700; color: #1e293b;">पंजीकृत उम्मीदवार सूची (<%= candidates.length %>)</h3>
+
+          <div class="admin-table-controls">
+            <div style="position: relative;">
+              <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
+              <input type="text" id="adminTableSearch" class="admin-search-input" placeholder="उम्मीदवार खोजें..." style="padding-left: 32px;">
+            </div>
+          </div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>फोटो</th>
+              <th>नाम व विवरण</th>
+              <th>पार्टी / दल</th>
+              <th>वार्ड</th>
+              <th>आयु / शिक्षा</th>
+              <th>जन समर्थन</th>
+              <th style="text-align: right;">एक्शन</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% candidates.forEach(c => { %>
+              <tr class="searchable-row">
+                <td style="width: 60px;">
+                  <img src="<%= c.photo %>" alt="<%= c.name %>" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #e2e8f0;">
+                </td>
+                <td>
+                  <div style="font-weight: 700; color: #1e293b;"><%= c.name %></div>
+                  <div style="font-size: 12px; color: #64748b; font-style: italic;">"<%= c.slogan %>"</div>
+                </td>
+                <td>
+                  <span class="party-badge <%= c.partyBadge.toLowerCase() %>" style="margin: 0;">
+                    <%= c.party %>
+                  </span>
+                </td>
+                <td><span style="font-weight: 600;"><%= c.ward %></span></td>
+                <td style="font-size: 13px; color: #475569;">
+                  <%= c.age %> वर्ष • <%= c.education %>
+                </td>
+                <td>
+                  <strong style="color: #e11d48; font-weight: 700; font-size: 15px;"><i class="fa-solid fa-heart"></i> <%= c.votes %></strong> <span style="font-size: 12px; color: #64748b;">मत</span>
+                </td>
+                <td style="text-align: right;">
+                  <div class="action-btn-group" style="justify-content: flex-end;">
+                    <a href="/candidate/<%= c.id %>" target="_blank" class="icon-action-btn" title="लाइव प्रोफाइल देखें">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                    <button type="button" onclick="editCandidate(<%= JSON.stringify(c) %>)" class="icon-action-btn" title="संपादित करें">
+                      <i class="fa-regular fa-pen-to-square"></i>
+                    </button>
+                    <button type="button" onclick="confirmDelete('<%= c.name %>', '/api/candidates/<%= c.id %>/delete')" class="icon-action-btn delete" title="हटाएं">
+                      <i class="fa-regular fa-trash-can"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal: नया उम्मीदवार जोड़ें (Add Candidate) -->
+  <div id="addCandidateModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>👤 नया उम्मीदवार जोड़ें</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('addCandidateModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form action="/api/candidates" method="POST">
+          <div class="form-row">
+            <div class="form-group">
+              <label>पूरा नाम *</label>
+              <input type="text" name="name" class="form-control" placeholder="उदा. रामलाल सिंह" required>
+            </div>
+            <div class="form-group">
+              <label>पार्टी / संगठन का नाम *</label>
+              <input type="text" name="party" class="form-control" placeholder="उदा. भारतीय जनता पार्टी" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>पार्टी कोड (उदा. BJP, INC, IND)</label>
+              <input type="text" name="partyBadge" class="form-control" placeholder="BJP">
+            </div>
+            <div class="form-group">
+              <label>वार्ड संख्या *</label>
+              <input type="text" name="ward" class="form-control" placeholder="उदा. वार्ड 4" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>आयु (वर्ष)</label>
+              <input type="number" name="age" class="form-control" placeholder="उदा. 45" value="40">
+            </div>
+            <div class="form-group">
+              <label>शैक्षणिक योग्यता</label>
+              <input type="text" name="education" class="form-control" placeholder="उदा. स्नातक">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>गाँव / निवास</label>
+              <input type="text" name="village" class="form-control" placeholder="उदा. मोहनपुर">
+            </div>
+            <div class="form-group">
+              <label>मोबाइल नंबर</label>
+              <input type="text" name="phone" class="form-control" placeholder="+91 98765 43210">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>चुनावी नारा / स्लोगन</label>
+            <input type="text" name="slogan" class="form-control" placeholder="उदा. गाँव का विकास, सबका साथ">
+          </div>
+
+          <div class="form-group">
+            <label>फोटो URL</label>
+            <input type="url" name="photo" class="form-control" placeholder="https://images.unsplash.com/...">
+          </div>
+
+          <div class="form-group">
+            <label>व्यक्तिगत परिचय (Bio)</label>
+            <textarea name="bio" class="form-control" rows="3" placeholder="उम्मीदवार के सामाजिक कार्य एवं पृष्ठभूमि का परिचय..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 8px;">
+            <i class="fa-solid fa-check"></i> उम्मीदवार सुरक्षित करें
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: उम्मीदवार संपादित करें (Edit Candidate) -->
+  <div id="editCandidateModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 600px;">
+      <div class="modal-header">
+        <h3>✏️ उम्मीदवार प्रोफाइल संपादित करें</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('editCandidateModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editCandidateForm" method="POST">
+          <div class="form-row">
+            <div class="form-group">
+              <label>पूरा नाम *</label>
+              <input type="text" id="editCandName" name="name" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label>पार्टी / दल</label>
+              <input type="text" id="editCandParty" name="party" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>पार्टी कोड</label>
+              <input type="text" id="editCandPartyBadge" name="partyBadge" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>वार्ड</label>
+              <input type="text" id="editCandWard" name="ward" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>आयु</label>
+              <input type="number" id="editCandAge" name="age" class="form-control">
+            </div>
+            <div class="form-group">
+              <label>शिक्षा</label>
+              <input type="text" id="editCandEducation" name="education" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>मोबाइल नंबर</label>
+            <input type="text" id="editCandPhone" name="phone" class="form-control">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>स्लोगन</label>
+              <input type="text" id="editCandSlogan" name="slogan" class="form-control">
+            </div>
+            <div class="form-group" style="background: #fff1f2; border: 1px solid #fecdd3; padding: 6px 12px; border-radius: 8px;">
+              <label style="color: #be123c; font-weight: 700; font-size: 13px; margin-bottom: 3px;">❤️ जन समर्थन संख्या (Votes)</label>
+              <input type="number" id="editCandVotes" name="votes" class="form-control" min="0" style="font-weight: 700; color: #be123c;">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>फोटो URL</label>
+            <input type="url" id="editCandPhoto" name="photo" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label>परिचय</label>
+            <textarea id="editCandBio" name="bio" class="form-control" rows="3"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 8px;">
+            <i class="fa-solid fa-floppy-disk"></i> परिवर्तन सहेजें
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

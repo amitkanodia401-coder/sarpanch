@@ -1,0 +1,364 @@
+<%- include('partials/header') %>
+
+<!-- 1. HERO SECTION -->
+<section class="hero-section">
+  <div class="container hero-inner-container">
+    <div class="hero-content">
+      <div class="hero-tag">
+        <i class="fa-solid fa-award"></i> विकास भी विश्वास भी
+      </div>
+      <h1 class="hero-title">मेरा गाँव, <br>मेरा भविष्य</h1>
+      <p class="hero-subtitle">
+        <span><i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> पारदर्शी पंचायत</span>
+        <span class="sep">•</span>
+        <span><i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> बेहतर विकास</span>
+        <span class="sep">•</span>
+        <span><i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> समृद्ध गांव</span>
+      </p>
+
+      <!-- Search Box -->
+      <form action="/candidates" method="GET" class="search-box-wrapper">
+        <i class="fa-solid fa-magnifying-glass" style="color: #94a3b8; font-size: 16px; margin-right: 6px;"></i>
+        <input type="text" name="q" placeholder="किसी काम, उम्मीदवार या सूचना को खोजें..." required aria-label="सर्च करें">
+        <button type="submit" aria-label="सर्च करें">
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+    </div>
+
+    <!-- Floating Badge (Click to open full meeting details) -->
+    <div class="hero-floating-badge" onclick="openModal('gramSabhaModal')" style="cursor: pointer;" title="क्लिक करके ग्राम सभा बैठक का विवरण देखें">
+      <div class="badge-icon-box">
+        <i class="fa-solid fa-bullhorn"></i>
+      </div>
+      <div class="badge-text-box">
+        <h4><%= (locals.gramSabha && gramSabha.title) ? gramSabha.title : 'आगामी ग्राम सभा बैठक' %></h4>
+        <p>दिनांक: <%= (locals.gramSabha && gramSabha.date) ? gramSabha.date : '15 अगस्त 2024' %>, <%= (locals.gramSabha && gramSabha.time) ? gramSabha.time : 'सुबह 10:00 बजे' %></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. CANDIDATES FOR SARPANCH SECTION -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">सरपंच पद के उम्मीदवार</h2>
+      <p class="section-subtitle">अपने गाँव के विकास के लिए सही नेतृत्व चुनें</p>
+    </div>
+
+    <div class="candidates-grid">
+      <% candidates.forEach(candidate => { %>
+        <div class="candidate-card">
+          <div class="candidate-avatar-wrap">
+            <img src="<%= candidate.photo %>" alt="<%= candidate.name %>" class="candidate-avatar" loading="lazy">
+            <span class="candidate-ward-pill"><%= candidate.ward %></span>
+          </div>
+          
+          <h3 class="candidate-name"><%= candidate.name %></h3>
+          
+          <div>
+            <span class="party-badge <%= candidate.partyBadge.toLowerCase() %>">
+              <%= candidate.party %>
+            </span>
+          </div>
+
+          <p class="candidate-slogan">"<%= candidate.slogan %>"</p>
+
+          <div class="candidate-meta">
+            <div>
+              <span>आयु</span>
+              <strong><%= candidate.age %> वर्ष</strong>
+            </div>
+            <div>
+              <span>शिक्षा</span>
+              <strong><%= candidate.education %></strong>
+            </div>
+            <div>
+              <span>समर्थन</span>
+              <strong class="vote-num-<%= candidate.id %>" style="color: #e11d48; font-weight: 700;"><%= candidate.votes %></strong>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <a href="/candidate/<%= candidate.id %>" class="btn btn-outline btn-sm" style="flex: 1; justify-content: center; font-size: 13px;">
+              प्रोफाइल <i class="fa-solid fa-chevron-right" style="font-size: 11px;"></i>
+            </a>
+            <button type="button" onclick="pledgeSupport(event, '<%= candidate.id %>', this)" class="btn btn-primary btn-sm" style="background: #e11d48; border-color: #e11d48; flex: 1.3; justify-content: center; font-size: 13px; font-weight: 600;">
+              <i class="fa-solid fa-heart"></i> समर्थन (<span class="vote-num-<%= candidate.id %>"><%= candidate.votes %></span>)
+            </button>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <!-- 3. QUICK ACTION TILES (4 CARDS) -->
+    <div class="quick-actions-grid">
+      <a href="/works" class="action-tile">
+        <div class="action-tile-icon works">
+          <i class="fa-solid fa-helmet-safety"></i>
+        </div>
+        <div class="action-tile-text">
+          <h4>ग्राम विकास कार्य</h4>
+          <p>देखें सभी कार्य व प्रगति</p>
+        </div>
+      </a>
+
+      <a href="/duties" class="action-tile">
+        <div class="action-tile-icon duties">
+          <i class="fa-solid fa-list-check"></i>
+        </div>
+        <div class="action-tile-text">
+          <h4>सरपंच के कर्तव्य</h4>
+          <p>जाने क्या-क्या योजनाएं हैं</p>
+        </div>
+      </a>
+
+      <a href="#gram-sabha" onclick="openModal('gramSabhaModal'); return false;" class="action-tile">
+        <div class="action-tile-icon sabha">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <div class="action-tile-text">
+          <h4>ग्राम सभा</h4>
+          <p>बैठक की ताजा जानकारी</p>
+        </div>
+      </a>
+
+      <a href="/complaint" class="action-tile">
+        <div class="action-tile-icon complaint">
+          <i class="fa-solid fa-comment-dots"></i>
+        </div>
+        <div class="action-tile-text">
+          <h4>शिकायत / सुझाव</h4>
+          <p>अपनी बात सीधे कहें</p>
+        </div>
+      </a>
+    </div>
+
+    <!-- 3.1 FEATURED SARPANCH KAKODA DEVELOPMENT WORKS -->
+    <div style="margin-top: 48px; margin-bottom: 40px;">
+      <div class="featured-works-header">
+        <div>
+          <div style="display: inline-flex; align-items: center; gap: 6px; background: #e8f5ee; color: #108e5e; font-size: 12.5px; font-weight: 700; padding: 4px 12px; border-radius: 999px; margin-bottom: 8px;">
+            <i class="fa-solid fa-shield-halved"></i> ई-ग्राम स्वराज पोर्टल प्रमाणित (ग्राम पंचायत काकोड़ा)
+          </div>
+          <h2 style="font-size: 26px; font-weight: 800; color: #1e293b;">सरपंच द्वारा कराए गए विकास कार्य</h2>
+          <p style="font-size: 14px; color: #64748b;">15वें वित्त आयोग योजनांतर्गत स्वीकृत, निर्मित एवं पूर्ण हुए विकास कार्यों का पारदर्शी ब्यौरा</p>
+        </div>
+        <a href="/works" class="btn btn-primary featured-works-view-all" style="background: #108e5e; font-size: 13.5px;">
+          सभी विकास कार्य व वाउचर देखें <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="works-grid">
+        <% (works || []).slice(0, 4).forEach(work => { %>
+          <% 
+            let statusClass = 'completed';
+            let statusIcon = 'fa-circle-check';
+            if (work.status === 'चालू') {
+              statusClass = 'in-progress';
+              statusIcon = 'fa-clock';
+            }
+            if (work.status === 'आगामी') {
+              statusClass = 'upcoming';
+              statusIcon = 'fa-calendar-days';
+            }
+          %>
+          <div class="work-card" data-status="<%= work.status %>">
+            <div class="work-card-body">
+              <!-- Top Bar: Code, Scheme & Status -->
+              <div class="work-card-top-bar">
+                <div class="work-card-badges">
+                  <% if (work.workCode) { %>
+                    <span class="badge-work-code">
+                      <i class="fa-solid fa-barcode"></i> <%= work.workCode %>
+                    </span>
+                  <% } %>
+                  <span class="badge-work-scheme">
+                    <i class="fa-solid fa-landmark"></i> <%= work.scheme %>
+                  </span>
+                  <% if (work.vouchers && work.vouchers.length) { %>
+                    <span class="badge-work-verified">
+                      <i class="fa-solid fa-shield-check"></i> <%= work.vouchers.length %> वाउचर
+                    </span>
+                  <% } %>
+                </div>
+                <span class="work-status-badge <%= statusClass %>">
+                  <i class="fa-solid <%= statusIcon %>"></i> <%= work.status %>
+                </span>
+              </div>
+
+              <!-- Title -->
+              <h3 class="work-card-title">
+                <a href="/work/<%= work.id %>"><%= work.title %></a>
+              </h3>
+
+              <!-- Details Key-Value Strip -->
+              <div class="work-card-meta-grid">
+                <div class="meta-item">
+                  <span class="meta-label"><i class="fa-solid fa-location-dot"></i> स्थान:</span>
+                  <span class="meta-value"><%= work.location ? work.location.split(',')[0].trim() : 'ग्राम पंचायत काकोड़ा' %></span>
+                </div>
+                <% if (work.sanctionNo) { %>
+                  <div class="meta-item">
+                    <span class="meta-label"><i class="fa-solid fa-stamp"></i> स्वीकृति:</span>
+                    <span class="meta-value"><%= work.sanctionNo.split(' - ')[0].trim() %></span>
+                  </div>
+                <% } %>
+                <div class="meta-item">
+                  <span class="meta-label"><i class="fa-solid fa-layer-group"></i> श्रेणी:</span>
+                  <span class="meta-value"><%= work.category || 'सड़क एवं नाली निर्माण' %></span>
+                </div>
+              </div>
+
+              <p class="work-card-desc">
+                <%= work.description ? (work.description.length > 90 ? work.description.substring(0, 90) + '...' : work.description) : '' %>
+              </p>
+
+              <!-- Signatories -->
+              <div class="work-card-officials">
+                <span><i class="fa-solid fa-signature" style="color: #108e5e;"></i> <strong>सरपंच:</strong> <%= work.sarpanchSign ? work.sarpanchSign.split('(')[0].trim() : 'संदीप कुमार' %></span>
+                <span><strong>सचिव:</strong> <%= work.secretarySign ? work.secretarySign.split('(')[0].trim() : 'रवि' %></span>
+              </div>
+
+              <!-- Progress bar -->
+              <div class="work-card-progress">
+                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
+                  <span style="color: #64748b; font-weight: 600;">प्रगति</span>
+                  <strong style="color: <%= work.status === 'पूर्ण' ? '#108e5e' : '#d97706' %>;"><%= work.progress %>%</strong>
+                </div>
+                <div class="progress-bar-wrap" style="height: 6px; margin: 0; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+                  <div class="progress-bar-fill" style="width: <%= work.progress %>%; height: 100%; background: <%= work.status === 'पूर्ण' ? '#108e5e' : '#f59e0b' %>; border-radius: 999px;"></div>
+                </div>
+              </div>
+
+              <div class="work-card-footer">
+                <div class="work-budget-tag">
+                  <span>स्वीकृत बजट</span>
+                  ₹<%= (Number(work.budget) || 0).toLocaleString('en-IN') %>
+                </div>
+
+                <a href="/work/<%= work.id %>" class="btn btn-outline btn-sm">
+                  विवरण व वाउचर <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
+                </a>
+              </div>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <!-- 4. VILLAGE STATS SECTION -->
+    <div class="stats-banner">
+      <div style="margin-bottom: 24px;">
+        <h3 style="font-size: 20px; font-weight: 800; color: #1e293b;">हमारे गाँव की मुख्य जानकारी</h3>
+        <p style="font-size: 13.5px; color: #64748b;">गाँव से जुड़े मुख्य आंकड़े एवं भौगोलिक विवरण</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-item">
+          <div class="stat-icon">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div class="stat-info">
+            <p>कुल आबादी</p>
+            <h3><%= villageInfo.population %></h3>
+          </div>
+        </div>
+
+        <div class="stat-item">
+          <div class="stat-icon">
+            <i class="fa-solid fa-house-chimney"></i>
+          </div>
+          <div class="stat-info">
+            <p>कुल परिवार</p>
+            <h3><%= villageInfo.families %></h3>
+          </div>
+        </div>
+
+        <div class="stat-item">
+          <div class="stat-icon">
+            <i class="fa-solid fa-map-location-dot"></i>
+          </div>
+          <div class="stat-info">
+            <p>कुल वार्ड</p>
+            <h3><%= villageInfo.wards %></h3>
+          </div>
+        </div>
+
+        <div class="stat-item">
+          <div class="stat-icon">
+            <i class="fa-solid fa-wheat-awn"></i>
+          </div>
+          <div class="stat-info">
+            <p>कुल कृषि क्षेत्र</p>
+            <h3><%= villageInfo.landArea %></h3>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. OUR VILLAGE SHOWCASE CARD -->
+    <div class="village-showcase">
+      <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=500&fit=crop" alt="हमारा गाँव" class="village-showcase-img">
+      <div class="village-showcase-content">
+        <span class="party-badge bjp" style="margin-bottom: 8px;">हमारा गौरव</span>
+        <h3>हमारा गाँव: <%= villageInfo.name %></h3>
+        <p><%= villageInfo.about %></p>
+        <div class="village-showcase-actions">
+          <a href="/works" class="btn btn-primary">
+            गाँव के विकास कार्य देखें <i class="fa-solid fa-arrow-right"></i>
+          </a>
+          <a href="/candidates" class="btn btn-outline">
+            उम्मीदवार देखें
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Gram Sabha Modal Popup (Dynamic with Admin Edit) -->
+<div id="gramSabhaModal" class="modal-overlay">
+  <div class="modal-box" style="max-width: 600px;">
+    <div class="modal-header">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div style="width: 36px; height: 36px; background: #e8f5ee; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #108e5e; font-size: 18px;">
+          <i class="fa-solid fa-bullhorn"></i>
+        </div>
+        <h3 style="margin: 0; font-size: 18px;"><%= (locals.gramSabha && gramSabha.title) ? gramSabha.title : '🏛️ आगामी ग्राम सभा बैठक सूचना' %></h3>
+      </div>
+      <button class="modal-close-btn" onclick="closeModal('gramSabhaModal')">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 8px;">
+        <span class="status-chip <%= (locals.gramSabha && gramSabha.active) ? 'green' : 'amber' %>" style="font-size: 12px; padding: 4px 10px;">
+          <i class="fa-solid <%= (locals.gramSabha && gramSabha.active) ? 'fa-circle-check' : 'fa-circle-pause' %>"></i> <%= (locals.gramSabha && gramSabha.status) ? gramSabha.status : 'सक्रिय सूचना' %>
+        </span>
+        <% if (locals.isAdmin) { %>
+          <a href="/admin?tab=dashboard" style="font-size: 12.5px; color: #108e5e; text-decoration: none; font-weight: 700; background: #e8f5ee; padding: 4px 10px; border-radius: 6px;">
+            <i class="fa-solid fa-pen-to-square"></i> एडमिन पैनल में बदलें
+          </a>
+        <% } %>
+      </div>
+
+      <p style="font-size: 15px; margin-bottom: 16px; line-height: 1.6; color: #334155;">
+        <%= (locals.gramSabha && gramSabha.description) ? gramSabha.description : 'सभी ग्रामवासियों को सूचित किया जाता है कि आगामी विकास कार्यों के अनुमोदन हेतु ग्राम सभा की खुली बैठक आयोजित की जा रही है।' %>
+      </p>
+
+      <div style="background: #f8fafc; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 16px; font-size: 14px; display: flex; flex-direction: column; gap: 10px;">
+        <div><strong>📅 दिनांक:</strong> <span style="color: #0f172a; font-weight: 600;"><%= (locals.gramSabha && gramSabha.date) ? gramSabha.date : '15 अगस्त 2024' %></span></div>
+        <div><strong>⏰ समय:</strong> <span style="color: #0f172a; font-weight: 600;"><%= (locals.gramSabha && gramSabha.time) ? gramSabha.time : 'प्रातः 10:00 बजे' %></span></div>
+        <div><strong>📍 स्थान:</strong> <span style="color: #0f172a; font-weight: 600;"><%= (locals.gramSabha && gramSabha.location) ? gramSabha.location : 'ग्राम पंचायत भवन चौपाल' %></span></div>
+        <div><strong>🎯 मुख्य एजेंडा:</strong> <span style="color: #0f172a; font-weight: 600;"><%= (locals.gramSabha && gramSabha.agenda) ? gramSabha.agenda : 'जल निकासी नाली, अमृत सरोवर और नई स्ट्रीट लाइट योजना।' %></span></div>
+      </div>
+
+      <p style="font-size: 13.5px; color: #64748b; line-height: 1.5; margin: 0;">
+        <i class="fa-solid fa-circle-info" style="color: #0284c7;"></i> <%= (locals.gramSabha && gramSabha.notice) ? gramSabha.notice : 'गाँव के सभी 18 वर्ष से ऊपर के सम्मानित मतदाताओं की उपस्थिति सादर प्रार्थनीय है।' %>
+      </p>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

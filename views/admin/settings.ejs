@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %></title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="admin-body">
+
+  <%- include('../partials/admin-sidebar') %>
+
+  <div class="admin-main">
+    <%- include('../partials/admin-topbar') %>
+
+    <main class="admin-content">
+
+      <!-- Header Row -->
+      <div style="margin-bottom: 24px;">
+        <h1 style="font-size: 22px; font-weight: 800; color: #1e293b;">ग्राम पंचायत सेटिंग्स</h1>
+        <p style="font-size: 13.5px; color: #64748b;">गाँव का नाम, आबादी, संपर्क विवरण एवं पोर्टल संदेश अद्यतन करें</p>
+      </div>
+
+      <% if (locals.saved) { %>
+        <div style="background: #dcfce7; color: #15803d; border: 1px solid #86efac; padding: 14px 20px; border-radius: 8px; margin-bottom: 20px;">
+          ✓ जानकारी सफलतापूर्वक सुरक्षित कर ली गई है!
+        </div>
+      <% } %>
+
+      <div class="admin-card" style="padding: 28px; max-width: 800px;">
+        <form action="/api/settings" method="POST">
+          <div class="form-row">
+            <div class="form-group">
+              <label>ग्राम पंचायत का नाम *</label>
+              <input type="text" name="name" class="form-control" value="<%= villageInfo.name %>" required>
+            </div>
+            <div class="form-group">
+              <label>जिला *</label>
+              <input type="text" name="district" class="form-control" value="<%= villageInfo.district %>" required>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>राज्य *</label>
+              <input type="text" name="state" class="form-control" value="<%= villageInfo.state %>" required>
+            </div>
+            <div class="form-group">
+              <label>पिन कोड</label>
+              <input type="text" name="pincode" class="form-control" value="<%= villageInfo.pincode %>">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>कुल आबादी</label>
+              <input type="text" name="population" class="form-control" value="<%= villageInfo.population %>">
+            </div>
+            <div class="form-group">
+              <label>कुल परिवार</label>
+              <input type="text" name="families" class="form-control" value="<%= villageInfo.families %>">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>कुल वार्ड</label>
+              <input type="text" name="wards" class="form-control" value="<%= villageInfo.wards %>">
+            </div>
+            <div class="form-group">
+              <label>कृषि भूमि क्षेत्र</label>
+              <input type="text" name="landArea" class="form-control" value="<%= villageInfo.landArea %>">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>हेल्पलाइन फोन नंबर</label>
+              <input type="text" name="phone" class="form-control" value="<%= villageInfo.phone %>">
+            </div>
+            <div class="form-group">
+              <label>आधिकारिक ईमेल</label>
+              <input type="email" name="email" class="form-control" value="<%= villageInfo.email %>">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>पोर्टल स्लोगन / ध्येय वाक्य</label>
+            <input type="text" name="slogan" class="form-control" value="<%= villageInfo.slogan %>">
+          </div>
+
+          <div class="form-group">
+            <label>गाँव के बारे में संक्षिप्त परिचय</label>
+            <textarea name="about" class="form-control" rows="3"><%= villageInfo.about %></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="border-radius: 8px; padding: 12px 28px;">
+            <i class="fa-solid fa-floppy-disk"></i> सेटिंग्स सहेजें
+          </button>
+        </form>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

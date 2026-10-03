@@ -1,0 +1,149 @@
+<%- include('partials/header') %>
+
+<div class="section" style="padding-top: 36px;">
+  <div class="container">
+
+    <!-- Breadcrumb -->
+    <div style="font-size: 13.5px; color: #64748b; margin-bottom: 20px;">
+      <a href="/" style="color: #108e5e;"><i class="fa-solid fa-house"></i> होम</a> / <span>ग्राम विकास कार्य</span>
+    </div>
+
+    <!-- Page Header & Filter Tabs -->
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 28px;">
+      <div>
+        <h1 style="font-size: 28px; font-weight: 800; color: #1e293b;">ग्राम विकास कार्य</h1>
+        <p style="font-size: 14.5px; color: #64748b;">गाँव के बुनियादी ढांचे, शिक्षा, स्वास्थ्य एवं स्वच्छता से जुड़े कार्य</p>
+      </div>
+
+      <!-- Filter Tabs (Screen 5) -->
+      <div class="filter-tabs-scroll-wrap">
+        <div class="filter-tabs" style="margin-bottom: 0;">
+          <button class="filter-tab work-filter-tab active" data-status="all">सभी</button>
+          <button class="filter-tab work-filter-tab" data-status="पूर्ण">पूर्ण हुए कार्य</button>
+          <button class="filter-tab work-filter-tab" data-status="चालू">चालू</button>
+          <button class="filter-tab work-filter-tab" data-status="आगामी">आगामी</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Verified Govt Portal Banner -->
+    <div class="govt-verified-banner">
+      <div class="govt-verified-content">
+        <div class="govt-verified-icon">
+          <i class="fa-solid fa-certificate"></i>
+        </div>
+        <div>
+          <strong style="color: #15803d; font-size: 15px;">जन सूचना पोर्टल एवं ई-ग्राम स्वराज प्रमाणित विकास कार्य (काकोड़ा)</strong>
+          <p style="color: #166534; font-size: 13px; margin-top: 2px;">15वें वित्त आयोग, राज्य वित्त आयोग (पंचम, षष्ठम, सप्तम) एवं MLALAD द्वारा स्वीकृत वास्तविक कार्य व वाउचर रिकॉर्ड</p>
+        </div>
+      </div>
+      <span class="govt-verified-pill">
+        <i class="fa-solid fa-file-invoice-dollar"></i> 100% पारदर्शी सरकारी रिकॉर्ड
+      </span>
+    </div>
+
+    <!-- Works Grid -->
+    <!-- Works Grid (Photo-less clean official cards) -->
+    <div class="works-grid">
+      <% works.forEach(work => { %>
+        <% 
+          let statusClass = 'completed';
+          let statusIcon = 'fa-circle-check';
+          if (work.status === 'चालू') {
+            statusClass = 'in-progress';
+            statusIcon = 'fa-clock';
+          }
+          if (work.status === 'आगामी') {
+            statusClass = 'upcoming';
+            statusIcon = 'fa-calendar-days';
+          }
+        %>
+        <div class="work-card work-list-item" data-status="<%= work.status %>">
+          <div class="work-card-body">
+            <!-- Top Bar: Code, Scheme & Status -->
+            <div class="work-card-top-bar">
+              <div class="work-card-badges">
+                <% if (work.workCode) { %>
+                  <span class="badge-work-code">
+                    <i class="fa-solid fa-barcode"></i> <%= work.workCode %>
+                  </span>
+                <% } %>
+                <span class="badge-work-scheme">
+                  <i class="fa-solid fa-landmark"></i> <%= work.scheme %>
+                </span>
+                <% if (work.vouchers && work.vouchers.length) { %>
+                  <span class="badge-work-verified">
+                    <i class="fa-solid fa-shield-check"></i> <%= work.vouchers.length %> वाउचर
+                  </span>
+                <% } %>
+              </div>
+              <span class="work-status-badge <%= statusClass %>">
+                <i class="fa-solid <%= statusIcon %>"></i> <%= work.status %>
+              </span>
+            </div>
+
+            <!-- Title -->
+            <h3 class="work-card-title">
+              <a href="/work/<%= work.id %>"><%= work.title %></a>
+            </h3>
+
+            <!-- Details Key-Value Strip -->
+            <div class="work-card-meta-grid">
+              <div class="meta-item">
+                <span class="meta-label"><i class="fa-solid fa-location-dot"></i> स्थान:</span>
+                <span class="meta-value"><%= work.location ? work.location.split(',')[0].trim() : 'ग्राम पंचायत काकोड़ा' %></span>
+              </div>
+              <% if (work.sanctionNo) { %>
+                <div class="meta-item">
+                  <span class="meta-label"><i class="fa-solid fa-stamp"></i> स्वीकृति:</span>
+                  <span class="meta-value"><%= work.sanctionNo.split(' - ')[0].trim() %></span>
+                </div>
+              <% } %>
+              <div class="meta-item">
+                <span class="meta-label"><i class="fa-solid fa-layer-group"></i> श्रेणी:</span>
+                <span class="meta-value"><%= work.category || 'सड़क एवं नाली निर्माण' %></span>
+              </div>
+            </div>
+            
+            <% if (work.description) { %>
+              <p class="work-card-desc">
+                <%= work.description.length > 95 ? work.description.substring(0, 95) + '...' : work.description %>
+              </p>
+            <% } %>
+
+            <!-- Signatory info -->
+            <div class="work-card-officials">
+              <span><i class="fa-solid fa-signature" style="color: #108e5e;"></i> <strong>सरपंच:</strong> <%= work.sarpanchSign ? work.sarpanchSign.split('(')[0].trim() : 'संदीप कुमार' %></span>
+              <span><strong>सचिव:</strong> <%= work.secretarySign ? work.secretarySign.split('(')[0].trim() : 'रवि' %></span>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="work-card-progress">
+              <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px;">
+                <span style="color: #64748b; font-weight: 600;">प्रगति स्थिति</span>
+                <strong style="color: <%= work.status === 'पूर्ण' ? '#108e5e' : '#d97706' %>;"><%= work.progress %>%</strong>
+              </div>
+              <div class="progress-bar-wrap" style="height: 6px; margin: 0; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+                <div class="progress-bar-fill" style="width: <%= work.progress %>%; height: 100%; background: <%= work.status === 'पूर्ण' ? '#108e5e' : '#f59e0b' %>; border-radius: 999px;"></div>
+              </div>
+            </div>
+
+            <div class="work-card-footer">
+              <div class="work-budget-tag">
+                <span>स्वीकृत बजट</span>
+                ₹<%= (Number(work.budget) || 0).toLocaleString('en-IN') %>
+              </div>
+
+              <a href="/work/<%= work.id %>" class="btn btn-outline btn-sm">
+                विवरण व वाउचर <i class="fa-solid fa-arrow-right" style="font-size: 11px;"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+  </div>
+</div>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,421 @@
+<%- include('partials/header') %>
+
+<div class="section" style="padding-top: 32px;">
+  <div class="container">
+
+    <!-- Breadcrumb -->
+    <div style="font-size: 13.5px; color: #64748b; margin-bottom: 20px;">
+      <a href="/" style="color: #108e5e;"><i class="fa-solid fa-house"></i> होम</a> / 
+      <a href="/works" style="color: #108e5e;">ग्राम विकास कार्य</a> / 
+      <span><%= work.title %></span>
+    </div>
+
+    <!-- Main Work Detail Header Card (Official Document Style without photo) -->
+    <div class="work-detail-official-header">
+      <div class="work-detail-official-top">
+        <div class="work-banner-badges">
+          <span class="work-status-badge <%= work.status === 'पूर्ण' ? 'completed' : (work.status === 'चालू' ? 'in-progress' : 'upcoming') %>">
+            <i class="fa-solid <%= work.status === 'पूर्ण' ? 'fa-circle-check' : 'fa-clock' %>"></i> <%= work.status %>
+          </span>
+          <span class="work-scheme-badge">
+            <i class="fa-solid fa-landmark"></i> <%= work.scheme %>
+          </span>
+          <% if (work.workCode) { %>
+            <span class="work-code-badge">
+              <i class="fa-solid fa-barcode"></i> <%= work.workCode %>
+            </span>
+          <% } %>
+          <span class="work-portal-badge">
+            <i class="fa-solid fa-certificate"></i> जन सूचना व ई-ग्राम स्वराज रिकॉर्ड
+          </span>
+        </div>
+      </div>
+
+      <h1 class="work-detail-official-title"><%= work.title %></h1>
+
+      <div class="work-detail-official-meta">
+        <span><i class="fa-solid fa-location-dot" style="color: #108e5e;"></i> <%= work.location || 'ग्राम पंचायत काकोड़ा, सुरजगढ (झुंझुनू)' %></span>
+        <% if (work.sanctionNo) { %>
+          <span><i class="fa-solid fa-stamp" style="color: #0284c7;"></i> <strong>स्वीकृति:</strong> <%= work.sanctionNo %></span>
+        <% } %>
+        <% if (work.category) { %>
+          <span><i class="fa-solid fa-layer-group" style="color: #f59e0b;"></i> <%= work.category %></span>
+        <% } %>
+        <span><i class="fa-solid fa-signature" style="color: #108e5e;"></i> <strong>सरपंच:</strong> <%= work.sarpanchSign ? work.sarpanchSign.split('(')[0].trim() : 'संदीप कुमार' %></span>
+      </div>
+
+      <div class="work-detail-official-stats">
+        <div class="stat-pill">
+          <span class="stat-lbl">स्वीकृत बजट</span>
+          <span class="stat-val">₹<%= (Number(work.budget) || 0).toLocaleString('en-IN') %></span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-lbl">वास्तविक व्यय</span>
+          <span class="stat-val" style="color: #108e5e;">₹<%= (Number(work.spent) || 0).toLocaleString('en-IN') %></span>
+        </div>
+        <div class="stat-pill">
+          <span class="stat-lbl">कार्य प्रगति</span>
+          <span class="stat-val" style="color: <%= work.status === 'पूर्ण' ? '#108e5e' : '#f59e0b' %>;"><%= work.progress %>%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grid: Specs & Financial Breakdown (Screen 4 Layout) -->
+    <div class="tabs-container" style="margin-bottom: 32px;">
+      
+      <div class="tabs-nav-scroll-wrap">
+        <div class="tabs-nav">
+          <button class="tab-link active" data-target="tab-work-desc">कार्य का विवरण</button>
+          <button class="tab-link" data-target="tab-work-finance">वित्तीय व वाउचर जानकारी</button>
+          <button class="tab-link" data-target="tab-work-docs">फोटो व सरकारी दस्तावेज</button>
+          <button class="tab-link" data-target="tab-work-progress">प्रगति रिपोर्ट</button>
+        </div>
+      </div>
+
+      <!-- Tab 1: विवरण -->
+      <div id="tab-work-desc" class="tab-pane active">
+        <div class="work-desc-grid">
+          <div>
+            <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 16px;">कार्य का विवरण एवं सरकारी स्वीकृति</h3>
+            <table class="specs-table">
+              <% if (work.workCode) { %>
+                <tr>
+                  <td class="label"><i class="fa-solid fa-barcode"></i> सरकारी कार्य कोड</td>
+                  <td><strong style="color: #0369a1; font-family: monospace; font-size: 14px;"><%= work.workCode %></strong></td>
+                </tr>
+              <% } %>
+              <% if (work.sanctionNo) { %>
+                <tr>
+                  <td class="label"><i class="fa-solid fa-stamp"></i> प्रशासनिक स्वीकृति (AS/FS)</td>
+                  <td><strong><%= work.sanctionNo %></strong></td>
+                </tr>
+              <% } %>
+              <tr>
+                <td class="label"><i class="fa-solid fa-file-contract"></i> योजना का नाम</td>
+                <td><strong><%= work.scheme %></strong></td>
+              </tr>
+              <tr>
+                <td class="label"><i class="fa-solid fa-location-dot"></i> कार्य स्थल / लोकेशन</td>
+                <td><%= work.location || 'ग्राम पंचायत काकोड़ा' %></td>
+              </tr>
+              <tr>
+                <td class="label"><i class="fa-regular fa-calendar"></i> कार्य प्रारंभ तिथि</td>
+                <td><%= work.startDate %></td>
+              </tr>
+              <tr>
+                <td class="label"><i class="fa-solid fa-calendar-check"></i> कार्य पूर्ण तिथि</td>
+                <td><%= work.endDate %></td>
+              </tr>
+              <tr>
+                <td class="label"><i class="fa-solid fa-ruler-combined"></i> कुल माप / विवरण</td>
+                <td><%= work.length %></td>
+              </tr>
+              <tr>
+                <td class="label"><i class="fa-solid fa-tags"></i> कार्य का प्रकार</td>
+                <td><%= work.workType %></td>
+              </tr>
+              <tr>
+                <td class="label"><i class="fa-solid fa-user-tie"></i> ठेकेदार / एजेंसी</td>
+                <td><strong><%= work.contractor %></strong></td>
+              </tr>
+              <tr>
+                <td class="label"><i class="fa-solid fa-signature"></i> सरपंच द्वारा हस्ताक्षरित</td>
+                <td><span style="color: #15803d; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> <%= work.sarpanchSign || 'संदीप कुमार' %></span></td>
+              </tr>
+              <tr>
+                <td class="label"><i class="fa-solid fa-signature"></i> सचिव द्वारा हस्ताक्षरित</td>
+                <td><span style="color: #15803d; font-weight: 700;"><i class="fa-solid fa-circle-check"></i> <%= work.secretarySign || 'रवि' %></span></td>
+              </tr>
+            </table>
+
+<%
+  const safeBudget = Number(work.budget) || 0;
+  const safeSpent = Number(work.spent) || 0;
+  const safePanchayatShare = Number(work.panchayatShare) || Math.round(safeBudget * 0.1);
+  const safeBalance = (work.balance !== undefined && !isNaN(Number(work.balance))) ? Number(work.balance) : (safeBudget - safeSpent);
+  const safeGovtShare = safeBudget - safePanchayatShare;
+  const safeProgress = Number(work.progress) || (work.status === 'पूर्ण' ? 100 : (work.status === 'चालू' ? 50 : 0));
+%>
+
+            <div style="margin-top: 24px;">
+              <h4 style="font-size: 15px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">विस्तृत विवरण एवं औचित्य</h4>
+              <p style="font-size: 14.5px; color: #475569; line-height: 1.7;"><%= work.description || 'गाँव में बुनियादी सुविधाओं के विकास हेतु 15वें वित्त आयोग से स्वीकृत कार्य।' %></p>
+            </div>
+          </div>
+
+          <!-- Right Column: Status & Progress -->
+          <div>
+            <div class="financial-box" style="margin-bottom: 24px;">
+              <h4 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 12px;">कार्य की वर्तमान स्थिति</h4>
+              <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+                <span style="font-size: 13.5px; color: #64748b;">पूर्णता प्रतिशत</span>
+                <span style="font-size: 24px; font-weight: 800; color: #108e5e;"><%= safeProgress %>%</span>
+              </div>
+              <div class="progress-bar-wrap" style="height: 12px;">
+                <div class="progress-bar-fill" style="width: <%= safeProgress %>%;"></div>
+              </div>
+              <p style="font-size: 12.5px; color: #15803d; font-weight: 600; margin-top: 6px;">
+                <i class="fa-solid fa-circle-check"></i> <%= work.status === 'पूर्ण' ? 'कार्य 100% संतोषजनक रूप से पूर्ण हो चुका है।' : 'कार्य निर्धारित समय सीमा में प्रगति पर है।' %>
+              </p>
+            </div>
+
+            <!-- Quick Financial Summary Widget -->
+            <div class="financial-box">
+              <h4 style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 14px;">वित्तीय सारांश</h4>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13.5px;">
+                <span style="color: #64748b;">कुल स्वीकृत बजट:</span>
+                <strong>₹<%= safeBudget.toLocaleString('en-IN') %></strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 13.5px;">
+                <span style="color: #64748b;">कुल वाउचर व्यय:</span>
+                <strong style="color: #108e5e;">₹<%= safeSpent.toLocaleString('en-IN') %></strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; font-size: 13.5px; border-top: 1px solid #e2e8f0; padding-top: 8px;">
+                <span style="color: #64748b;">शेष उपलब्ध राशि:</span>
+                <strong style="color: #0284c7;">₹<%= safeBalance.toLocaleString('en-IN') %></strong>
+              </div>
+            </div>
+
+            <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 10px;">
+              <a href="/api/export/works.csv" class="btn btn-primary" style="width: 100%;">
+                <i class="fa-solid fa-file-arrow-down"></i> वित्तीय रिपोर्ट डाउनलोड करें
+              </a>
+              <button onclick="navigator.clipboard.writeText(window.location.href); showToast('पेज लिंक कॉपी हो गया!');" class="btn btn-outline" style="width: 100%;">
+                <i class="fa-solid fa-share-nodes"></i> शेयर करें
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: वित्तीय जानकारी (Detailed Table + Vouchers) -->
+      <div id="tab-work-finance" class="tab-pane">
+        
+        <!-- Official Vouchers Table from eGramSwaraj -->
+        <% if (work.vouchers && work.vouchers.length) { %>
+          <div style="margin-bottom: 32px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+                  <i class="fa-solid fa-receipt" style="color: #108e5e;"></i> ई-ग्राम स्वराज वाउचर भुगतान विवरण
+                </h3>
+                <p style="font-size: 13.5px; color: #64748b;">सरपंच एवं सचिव द्वारा डिजिटल हस्ताक्षरित वाउचर का आधिकारिक ब्यौरा</p>
+              </div>
+              <span style="background: #e8f5ee; color: #108e5e; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 999px;">
+                <i class="fa-solid fa-shield-halved"></i> पोर्टल सत्यापित भुगतान
+              </span>
+            </div>
+
+            <div class="table-scroll-hint"><i class="fa-solid fa-arrows-left-right"></i> पूरा ब्योरा देखने के लिए बाएं-दाएं स्क्रॉल करें</div>
+            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 24px;">
+              <table class="data-table" style="border: 1px solid #e2e8f0; border-radius: 8px; width: 100%;">
+                <thead>
+                  <tr style="background: #f8fafc;">
+                    <th style="min-width: 140px;">भुगतान प्राप्तकर्ता (को)</th>
+                    <th style="min-width: 260px;">उद्देश्य / कार्य विवरण</th>
+                    <th style="min-width: 140px;">सरपंच हस्ताक्षर</th>
+                    <th style="min-width: 140px;">सचिव हस्ताक्षर</th>
+                    <th style="min-width: 150px;">वाउचर नं</th>
+                    <th style="min-width: 110px;">वाउचर तिथि</th>
+                    <th style="min-width: 120px; text-align: right;">राशि (₹)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% 
+                    let voucherTotal = 0;
+                    work.vouchers.forEach(v => { 
+                      voucherTotal += (Number(v.amount) || 0);
+                  %>
+                    <tr>
+                      <td><strong><%= v.agency %></strong></td>
+                      <td style="font-size: 13px; line-height: 1.5; color: #334155;"><%= v.purpose %></td>
+                      <td>
+                        <span style="color: #15803d; font-weight: 700; font-size: 12.5px;">
+                          <i class="fa-solid fa-signature"></i> <%= v.sarpanchSign || 'संदीप कुमार' %>
+                        </span>
+                      </td>
+                      <td>
+                        <span style="color: #15803d; font-weight: 700; font-size: 12.5px;">
+                          <i class="fa-solid fa-signature"></i> <%= v.secretarySign || 'रवि' %>
+                        </span>
+                      </td>
+                      <td style="font-family: monospace; font-size: 12.5px; color: #0f172a; font-weight: 600;">
+                        <%= v.voucherNo %>
+                      </td>
+                      <td style="font-size: 13px; color: #64748b;"><%= v.date %></td>
+                      <td style="text-align: right; font-weight: 800; color: #108e5e; font-size: 14px;">
+                        ₹<%= (Number(v.amount) || 0).toLocaleString('en-IN') %>
+                      </td>
+                    </tr>
+                  <% }); %>
+                  <tr style="background: #f0fdf4; font-weight: 800; border-top: 2px solid #bbf7d0;">
+                    <td colspan="6" style="text-align: right; color: #166534; font-size: 14px;">कुल वाउचर भुगतान योग:</td>
+                    <td style="text-align: right; color: #15803d; font-size: 16px;">₹<%= voucherTotal.toLocaleString('en-IN') %></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% } %>
+
+        <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 16px;">बजट आवंटन एवं व्यय सारांश</h3>
+        <div class="table-scroll-hint"><i class="fa-solid fa-arrows-left-right"></i> पूरा ब्योरा देखने के लिए बाएं-दाएं स्क्रॉल करें</div>
+        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+          <table class="data-table" style="border: 1px solid #e2e8f0; border-radius: 8px; width: 100%;">
+            <thead>
+              <tr>
+                <th style="min-width: 200px;">मद / विवरण</th>
+                <th style="min-width: 110px;">स्वीकृत बजट</th>
+                <th style="min-width: 110px;">जारी राशि</th>
+                <th style="min-width: 110px;">वास्तविक व्यय</th>
+                <th style="min-width: 110px;">शेष राशि</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>15वाँ वित्त आयोग (XVFC) / पंचायती राज अंश</strong></td>
+                <td>₹<%= safeBudget.toLocaleString('en-IN') %></td>
+                <td>₹<%= safeBudget.toLocaleString('en-IN') %></td>
+                <td>₹<%= safeSpent.toLocaleString('en-IN') %></td>
+                <td>₹<%= safeBalance.toLocaleString('en-IN') %></td>
+              </tr>
+              <tr style="background: #f8fafc; font-weight: 800;">
+                <td>कुल योग (Total)</td>
+                <td>₹<%= safeBudget.toLocaleString('en-IN') %></td>
+                <td>₹<%= safeBudget.toLocaleString('en-IN') %></td>
+                <td style="color: #108e5e;">₹<%= safeSpent.toLocaleString('en-IN') %></td>
+                <td style="color: #0284c7;">₹<%= safeBalance.toLocaleString('en-IN') %></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 3: फोटो / दस्तावेज -->
+      <div id="tab-work-docs" class="tab-pane">
+        <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 8px;">कार्य स्थल फोटो एवं सरकारी प्रमाण पत्रक</h3>
+        <p style="font-size: 13.5px; color: #64748b; margin-bottom: 20px;">ई-ग्राम स्वराज पोर्टल एवं स्थलीय सत्यापन से संबंधित प्रमाणित रिकॉर्ड (किसी भी फोटो पर क्लिक करके बड़ी फोटो देखें)</p>
+
+        <% if (work.documents && work.documents.length) { %>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+            <% work.documents.forEach((doc, idx) => { %>
+              <div class="doc-card-item" style="border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); display: flex; flex-direction: column; transition: transform 0.2s, box-shadow 0.2s;">
+                <div style="position: relative; height: 190px; background: #0f172a; cursor: pointer; overflow: hidden;" 
+                     data-img="<%= doc.url %>" 
+                     data-title="<%= doc.title %>" 
+                     data-meta="<%= doc.meta %>" 
+                     onclick="openImageLightbox(this.dataset.img, this.dataset.title, this.dataset.meta)" 
+                     title="क्लिक करके पूरी फोटो देखें">
+                  <img src="<%= doc.url %>" alt="<%= doc.title %>" style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease;">
+                  <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(15, 23, 42, 0.85); color: white; font-size: 11px; padding: 4px 10px; border-radius: 6px; backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.2);">
+                    <i class="fa-solid fa-magnifying-glass-plus" style="color: #38bdf8;"></i> पूरी फोटो देखें
+                  </span>
+                </div>
+                <div style="padding: 14px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                  <div>
+                    <h4 style="font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 6px;"><%= doc.title %></h4>
+                    <p style="font-size: 12px; color: #64748b; line-height: 1.4;"><%= doc.meta %></p>
+                  </div>
+                  <div style="margin-top: 12px; display: flex; gap: 8px;">
+                    <button type="button" 
+                            data-img="<%= doc.url %>" 
+                            data-title="<%= doc.title %>" 
+                            data-meta="<%= doc.meta %>" 
+                            onclick="openImageLightbox(this.dataset.img, this.dataset.title, this.dataset.meta)" 
+                            class="btn btn-primary btn-sm" style="flex: 1; font-size: 12px; justify-content: center;">
+                      <i class="fa-solid fa-expand"></i> बड़ी फोटो देखें
+                    </button>
+                    <a href="<%= doc.url %>" target="_blank" class="btn btn-outline btn-sm" style="font-size: 12px;" title="नए टैब में खोलें">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+            <div style="border-radius: 12px; overflow: hidden; border: 1px solid #e2e8f0; cursor: pointer;" 
+                 data-img="<%= work.image %>" 
+                 data-title="<%= work.title %>" 
+                 data-meta="कार्य पूर्ण होने के बाद (नवीनतम)" 
+                 onclick="openImageLightbox(this.dataset.img, this.dataset.title, this.dataset.meta)" 
+                 title="क्लिक करके पूरी फोटो देखें">
+              <div style="position: relative; height: 180px; background: #0f172a;">
+                <img src="<%= work.image %>" alt="<%= work.title %>" style="width: 100%; height: 100%; object-fit: cover;">
+                <span style="position: absolute; bottom: 8px; right: 8px; background: rgba(15, 23, 42, 0.85); color: white; font-size: 11px; padding: 4px 10px; border-radius: 6px;">
+                  <i class="fa-solid fa-magnifying-glass-plus" style="color: #38bdf8;"></i> पूरी फोटो देखें
+                </span>
+              </div>
+              <div style="padding: 12px; font-size: 13px; font-weight: 600; color: #334155; display: flex; justify-content: space-between; align-items: center;">
+                <span>कार्य पूर्ण होने के बाद (नवीनतम)</span>
+                <span style="color: #108e5e;"><i class="fa-solid fa-expand"></i> देखें</span>
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+
+      <!-- Tab 4: प्रगति रिपोर्ट -->
+      <div id="tab-work-progress" class="tab-pane">
+        <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 16px;">चरणबद्ध प्रगति टाइमलाइन</h3>
+        <div style="border-left: 2px solid #108e5e; padding-left: 20px; margin-left: 10px; display: flex; flex-direction: column; gap: 20px;">
+          <div>
+            <span style="font-size: 12px; color: #108e5e; font-weight: 700;"><%= work.startDate %></span>
+            <h4 style="font-size: 15px; font-weight: 700; color: #1e293b;">प्रशासनिक स्वीकृति एवं कार्य आरंभ</h4>
+            <p style="font-size: 13.5px; color: #64748b;">
+              <%= work.sanctionNo ? `स्वीकृति क्रमांक: ${work.sanctionNo} के अंतर्गत ` : '' %>ग्राम सभा एवं पंचायत समिति द्वारा 15वें वित्त आयोग से कार्य प्रारंभ किया गया।
+            </p>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: #108e5e; font-weight: 700;"><%= work.endDate %></span>
+            <h4 style="font-size: 15px; font-weight: 700; color: #1e293b;">कार्य भौतिक सत्यापन एवं पूर्णता</h4>
+            <p style="font-size: 13.5px; color: #64748b;">
+              सरपंच संदीप कुमार एवं सचिव द्वारा भौतिक सत्यापन उपरांत ई-ग्राम स्वराज पोर्टल पर भुगतान वाउचर जारी कर कार्य सफलतापूर्वक संपन्न किया गया।
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Related Works -->
+    <% if (relatedWorks && relatedWorks.length) { %>
+      <div style="margin-top: 40px;">
+        <h3 style="font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 20px;">अन्य ग्राम विकास कार्य</h3>
+        <div class="works-grid">
+          <% relatedWorks.forEach(rw => { %>
+            <div class="work-card" data-status="<%= rw.status %>">
+              <div class="work-card-body">
+                <div class="work-card-top-bar">
+                  <span class="badge-work-scheme"><i class="fa-solid fa-landmark"></i> <%= rw.scheme %></span>
+                  <span class="work-status-badge <%= rw.status === 'पूर्ण' ? 'completed' : 'in-progress' %>">
+                    <i class="fa-solid <%= rw.status === 'पूर्ण' ? 'fa-circle-check' : 'fa-clock' %>"></i> <%= rw.status %>
+                  </span>
+                </div>
+                <h4 style="font-size: 15px; font-weight: 700; margin-bottom: 8px; color: #1e293b;">
+                  <a href="/work/<%= rw.id %>" style="color: inherit; text-decoration: none;"><%= rw.title %></a>
+                </h4>
+                <% if (rw.location) { %>
+                  <p style="font-size: 12px; color: #64748b; margin-bottom: 10px;">
+                    <i class="fa-solid fa-location-dot" style="color: #108e5e;"></i> <%= rw.location.split(',')[0] %>
+                  </p>
+                <% } %>
+                <div class="work-card-footer" style="margin-top: 10px; padding-top: 10px;">
+                  <div class="work-budget-tag">
+                    <span>स्वीकृत बजट</span>
+                    ₹<%= (Number(rw.budget) || 0).toLocaleString('en-IN') %>
+                  </div>
+                  <a href="/work/<%= rw.id %>" class="btn btn-outline btn-sm">विवरण</a>
+                </div>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
+  </div>
+</div>
+
+<%- include('partials/footer') %>

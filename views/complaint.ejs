@@ -1,0 +1,73 @@
+<%- include('partials/header') %>
+
+<div class="section" style="padding-top: 36px;">
+  <div class="container" style="max-width: 800px;">
+
+    <!-- Breadcrumb -->
+    <div style="font-size: 13.5px; color: #64748b; margin-bottom: 20px;">
+      <a href="/" style="color: #108e5e;"><i class="fa-solid fa-house"></i> होम</a> / <span>नागरिक शिकायत एवं सुझाव</span>
+    </div>
+
+    <div class="complaint-card">
+      <div style="text-align: center; margin-bottom: 28px;">
+        <div style="width: 52px; height: 52px; background: #ede9fe; color: #7c3aed; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: 12px;">
+          <i class="fa-solid fa-envelope-open-text"></i>
+        </div>
+        <h1 style="font-size: 26px; font-weight: 800; color: #1e293b;">अपनी समस्या या सुझाव सीधे दर्ज करें</h1>
+        <p style="font-size: 14.5px; color: #64748b;">आपकी शिकायत सीधे ग्राम पंचायत एवं सरपंच कार्यालय तक पहुंचाई जाएगी।</p>
+      </div>
+
+      <div id="complaintSuccessBox" style="display: none;"></div>
+
+      <form id="citizenComplaintForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="complaintName">आपका पूरा नाम *</label>
+            <input type="text" id="complaintName" name="name" class="form-control" placeholder="उदा. रामेश्वर सिंह" required>
+          </div>
+          <div class="form-group">
+            <label for="complaintPhone">मोबाइल नंबर *</label>
+            <input type="tel" id="complaintPhone" name="phone" class="form-control" placeholder="उदा. 9876543210" required>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="complaintWard">वार्ड संख्या *</label>
+            <select id="complaintWard" name="ward" class="form-control" required>
+              <option value="">वार्ड चुनें</option>
+              <option value="वार्ड 1">वार्ड 1</option>
+              <option value="वार्ड 2">वार्ड 2</option>
+              <option value="वार्ड 3">वार्ड 3</option>
+              <option value="वार्ड 4">वार्ड 4</option>
+              <option value="वार्ड 5">वार्ड 5</option>
+              <option value="वार्ड 6">वार्ड 6</option>
+              <option value="वार्ड 7">वार्ड 7</option>
+              <option value="वार्ड 8">वार्ड 8</option>
+              <option value="वार्ड 9">वार्ड 9</option>
+              <option value="वार्ड 10">वार्ड 10</option>
+              <option value="वार्ड 11">वार्ड 11</option>
+              <option value="वार्ड 12">वार्ड 12</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="complaintSubject">विषय / समस्या का प्रकार *</label>
+            <input type="text" id="complaintSubject" name="subject" class="form-control" placeholder="उदा. सड़क पर स्ट्रीट लाइट खराब है" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="complaintMessage">समस्या का विस्तृत विवरण *</label>
+          <textarea id="complaintMessage" name="message" class="form-control" rows="5" placeholder="कृपया समस्या का पूरा पता और विवरण लिखें..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width: 100%;">
+          <i class="fa-solid fa-paper-plane"></i> शिकायत / सुझाव सबमिट करें
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<%- include('partials/footer') %>

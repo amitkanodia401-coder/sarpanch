@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %></title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="admin-body">
+
+  <%- include('../partials/admin-sidebar') %>
+
+  <div class="admin-main">
+    <%- include('../partials/admin-topbar') %>
+
+    <main class="admin-content">
+
+      <!-- Header Row -->
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+        <div>
+          <h1 style="font-size: 22px; font-weight: 800; color: #1e293b;">नागरिक शिकायतें एवं सुझाव प्रबंधन</h1>
+          <p style="font-size: 13.5px; color: #64748b;">ग्रामीणों द्वारा प्राप्त शिकायतों की स्थिति व त्वरित निस्तारण</p>
+        </div>
+      </div>
+
+      <!-- Complaints Table -->
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <h3 style="font-size: 16px; font-weight: 700; color: #1e293b;">कुल प्राप्त शिकायतें (<%= complaints.length %>)</h3>
+
+          <div class="admin-table-controls">
+            <div style="position: relative;">
+              <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 11px; color: #94a3b8; font-size: 13px;"></i>
+              <input type="text" id="adminTableSearch" class="admin-search-input" placeholder="शिकायतकर्ता या विषय खोजें..." style="padding-left: 32px;">
+            </div>
+          </div>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width: 70px;">आईडी</th>
+              <th>नागरिक का नाम</th>
+              <th>वार्ड / संपर्क</th>
+              <th>विषय एवं समस्या</th>
+              <th>दिनांक</th>
+              <th>स्थिति</th>
+              <th style="text-align: right;">एक्शन</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% complaints.forEach(comp => { %>
+              <% 
+                let chipClass = 'amber';
+                if (comp.status === 'निस्तारित') chipClass = 'green';
+                if (comp.status === 'लंबित') chipClass = 'red';
+              %>
+              <tr class="searchable-row">
+                <td><strong style="color: #64748b;">#<%= comp.id %></strong></td>
+                <td>
+                  <strong style="color: #1e293b;"><%= comp.name %></strong>
+                </td>
+                <td style="font-size: 13px; color: #475569;">
+                  <%= comp.ward %><br>
+                  <span style="color: #64748b;"><%= comp.phone %></span>
+                </td>
+                <td>
+                  <div style="font-weight: 700; color: #1e293b;"><%= comp.subject %></div>
+                  <div style="font-size: 12.5px; color: #64748b; max-width: 320px; line-height: 1.4;"><%= comp.message %></div>
+                  <% if (comp.reply) { %>
+                    <div style="margin-top: 6px; font-size: 12px; background: #f0fdf4; padding: 4px 8px; border-radius: 4px; color: #166534; border: 1px solid #bbf7d0;">
+                      <strong>कार्यालय टिप्पणी:</strong> <%= comp.reply %>
+                    </div>
+                  <% } %>
+                </td>
+                <td style="font-size: 12.5px; color: #64748b;"><%= comp.date %></td>
+                <td>
+                  <span class="status-chip <%= chipClass %>"><%= comp.status %></span>
+                </td>
+                <td style="text-align: right;">
+                  <button type="button" onclick="openReplyModal(<%= comp.id %>, '<%= comp.status %>', '<%= (comp.reply || '').replace(/'/g, "\\'") %>')" class="btn btn-outline btn-sm">
+                    <i class="fa-solid fa-reply"></i> निस्तारण करें
+                  </button>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Modal: शिकायत स्थिति अपडेट व निस्तारण -->
+  <div id="replyComplaintModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3>📝 शिकायत निस्तारण व स्थिति</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('replyComplaintModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="replyComplaintForm" method="POST">
+          <div class="form-group">
+            <label>वर्तमान स्थिति बदलें</label>
+            <select id="modalComplaintStatus" name="status" class="form-control" required>
+              <option value="लंबित">लंबित (Pending)</option>
+              <option value="प्रगति पर">प्रगति पर (In Progress)</option>
+              <option value="निस्तारित">निस्तारित (Resolved)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>पंचायत कार्यालय की टिप्पणी / निवारण रिपोर्ट</label>
+            <textarea id="modalComplaintReply" name="reply" class="form-control" rows="4" placeholder="उदा. संबंधित लाइनमैन द्वारा नई लाइट लगा दी गई है..."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; border-radius: 8px;">
+            <i class="fa-solid fa-check"></i> स्थिति अपडेट करें
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/admin.js"></script>
+  <script>
+    function openReplyModal(id, status, reply) {
+      const form = document.getElementById('replyComplaintForm');
+      form.action = `/api/complaints/${id}/status`;
+      document.getElementById('modalComplaintStatus').value = status;
+      document.getElementById('modalComplaintReply').value = reply || '';
+      openAdminModal('replyComplaintModal');
+    }
+  </script>
+</body>
+</html>

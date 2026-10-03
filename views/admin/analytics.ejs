@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle %></title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body class="admin-body">
+
+  <%- include('../partials/admin-sidebar') %>
+
+  <div class="admin-main">
+    <%- include('../partials/admin-topbar') %>
+
+    <main class="admin-content">
+
+      <!-- Header Row -->
+      <div style="margin-bottom: 24px;">
+        <h1 style="font-size: 22px; font-weight: 800; color: #1e293b;">विज़िटर एवं पोर्टल एनालिटिक्स</h1>
+        <p style="font-size: 13.5px; color: #64748b;">वेबसाइट ट्रैफ़िक, लोकप्रिय पृष्ठ एवं नागरिक सहभागिता का ब्यौरा</p>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="stats-cards-grid">
+        <div class="kpi-card">
+          <div class="kpi-title">कुल पोर्टल विज़िटर्स</div>
+          <div class="kpi-value"><%= stats.totalVisitors.toLocaleString('en-IN') %></div>
+          <div style="font-size: 12px; color: #15803d; margin-top: 6px;">+12% पिछले सप्ताह से</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">अद्वितीय (Unique) विज़िटर्स</div>
+          <div class="kpi-value"><%= stats.uniqueVisitors.toLocaleString('en-IN') %></div>
+          <div style="font-size: 12px; color: #15803d; margin-top: 6px;">+8% नए ग्रामीण जुड़े</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">कुल पेज व्यूज</div>
+          <div class="kpi-value"><%= stats.pageViews.toLocaleString('en-IN') %></div>
+          <div style="font-size: 12px; color: #15803d; margin-top: 6px;">+15% वृद्धि</div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-title">औसत सेशन समय</div>
+          <div class="kpi-value"><%= stats.avgDuration %> <span style="font-size: 14px; font-weight: 500;">मिनट</span></div>
+          <div style="font-size: 12px; color: #0284c7; margin-top: 6px;">सक्रिय ग्रामीण जुड़ाव</div>
+        </div>
+      </div>
+
+      <!-- Traffic Source Breakdown -->
+      <div class="admin-card" style="padding: 24px;">
+        <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 16px;">लोकप्रिय पृष्ठ एवं विज़िटर रुचि</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+          <div style="background: #f8fafc; padding: 18px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 13px; color: #64748b;">होम पेज</div>
+            <div style="font-size: 22px; font-weight: 800; color: #108e5e; margin: 4px 0;">28% (2,388 व्यूज)</div>
+            <div style="height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+              <div style="width: 28%; height: 100%; background: #108e5e;"></div>
+            </div>
+          </div>
+
+          <div style="background: #f8fafc; padding: 18px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 13px; color: #64748b;">उम्मीदवार सूची व प्रोफाइल</div>
+            <div style="font-size: 22px; font-weight: 800; color: #3b82f6; margin: 4px 0;">22% (1,877 व्यूज)</div>
+            <div style="height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+              <div style="width: 22%; height: 100%; background: #3b82f6;"></div>
+            </div>
+          </div>
+
+          <div style="background: #f8fafc; padding: 18px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 13px; color: #64748b;">ग्राम विकास कार्य</div>
+            <div style="font-size: 22px; font-weight: 800; color: #f59e0b; margin: 4px 0;">18% (1,535 व्यूज)</div>
+            <div style="height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+              <div style="width: 18%; height: 100%; background: #f59e0b;"></div>
+            </div>
+          </div>
+
+          <div style="background: #f8fafc; padding: 18px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 13px; color: #64748b;">सरपंच के कर्तव्य व वादे</div>
+            <div style="font-size: 22px; font-weight: 800; color: #8b5cf6; margin: 4px 0;">12% (1,023 व्यूज)</div>
+            <div style="height: 6px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+              <div style="width: 12%; height: 100%; background: #8b5cf6;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<div class="admin-sidebar-backdrop" id="adminSidebarBackdrop"></div>
+<aside class="admin-sidebar" id="adminSidebar">
+  <div class="admin-sidebar-brand">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div class="logo-icon">
+        <i class="fa-solid fa-seedling"></i>
+      </div>
+      <div>
+        <h2>मेरा गाँव</h2>
+        <span>एडमिन पोर्टल</span>
+      </div>
+    </div>
+    <button type="button" class="admin-sidebar-close" id="adminSidebarClose" aria-label="मेनू बंद करें">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <ul class="admin-sidebar-menu">
+    <li>
+      <a href="#dashboard" class="admin-nav-tab <%= activeTab === 'dashboard' ? 'active' : '' %>" data-tab="dashboard">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span>डैशबोर्ड</span>
+      </a>
+    </li>
+    <li>
+      <a href="#candidates" class="admin-nav-tab <%= activeTab === 'candidates' ? 'active' : '' %>" data-tab="candidates">
+        <i class="fa-solid fa-users-gear"></i>
+        <span>उम्मीदवार सूची व प्रोफाइल</span>
+        <span class="badge" style="background: #3b82f6;"><%= candidatesCount %></span>
+      </a>
+    </li>
+    <li>
+      <a href="#works" class="admin-nav-tab <%= activeTab === 'works' ? 'active' : '' %>" data-tab="works">
+        <i class="fa-solid fa-helmet-safety"></i>
+        <span>ग्राम विकास कार्य</span>
+        <span class="badge" style="background: #108e5e;"><%= totalWorksCount %></span>
+      </a>
+    </li>
+    <li>
+      <a href="#duties" class="admin-nav-tab <%= activeTab === 'duties' ? 'active' : '' %>" data-tab="duties">
+        <i class="fa-solid fa-list-check"></i>
+        <span>सरपंच के कर्तव्य</span>
+      </a>
+    </li>
+    <li>
+      <a href="#complaints" class="admin-nav-tab <%= activeTab === 'complaints' ? 'active' : '' %>" data-tab="complaints">
+        <i class="fa-solid fa-comments"></i>
+        <span>शिकायतें व सुझाव</span>
+        <% if (locals.pendingComplaints && locals.pendingComplaints > 0) { %>
+          <span class="badge"><%= locals.pendingComplaints %></span>
+        <% } %>
+      </a>
+    </li>
+    <li>
+      <a href="#analytics" class="admin-nav-tab <%= activeTab === 'analytics' ? 'active' : '' %>" data-tab="analytics">
+        <i class="fa-solid fa-chart-line"></i>
+        <span>विज़िटर एनालिटिक्स</span>
+      </a>
+    </li>
+    <li>
+      <a href="#gram-sabha" onclick="openAdminModal('editGramSabhaModal'); return false;" class="admin-nav-tab" title="आगामी ग्राम सभा बैठक की तिथि, समय व एजेंडा बदलें">
+        <i class="fa-solid fa-bullhorn" style="color: #38bdf8;"></i>
+        <span>ग्राम सभा बैठक</span>
+        <span class="badge" style="background: #108e5e;"><i class="fa-solid fa-pen"></i></span>
+      </a>
+    </li>
+    <li>
+      <a href="#settings" class="admin-nav-tab <%= activeTab === 'settings' ? 'active' : '' %>" data-tab="settings">
+        <i class="fa-solid fa-sliders"></i>
+        <span>पंचायत सेटिंग्स</span>
+      </a>
+    </li>
+  </ul>
+
+  <div class="admin-sidebar-footer">
+    <a href="/" target="_blank" style="background: rgba(16, 142, 94, 0.25); border: 1px solid rgba(16, 142, 94, 0.4);">
+      <i class="fa-solid fa-globe" style="color: #4ade80;"></i>
+      <span style="font-weight: 600; color: white;">वेबसाइट देखें</span>
+    </a>
+    <a href="/admin/logout" style="color: #f87171; font-size: 12.5px; margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+      <i class="fa-solid fa-arrow-right-from-bracket"></i>
+      <span>लॉगआउट (Logout)</span>
+    </a>
+  </div>
+</aside>

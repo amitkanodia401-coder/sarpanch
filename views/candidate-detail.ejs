@@ -1,0 +1,154 @@
+<%- include('partials/header') %>
+
+<div class="section" style="padding-top: 32px;">
+  <div class="container">
+
+    <!-- Back Navigation -->
+    <div style="margin-bottom: 20px;">
+      <a href="/candidates" style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: #108e5e;">
+        <i class="fa-solid fa-arrow-left"></i> सभी उम्मीदवार
+      </a>
+    </div>
+
+    <!-- Candidate Overview Card (Screen 3 Top) -->
+    <div class="detail-header-card">
+      <div class="candidate-profile-top">
+        <div style="position: relative;">
+          <img src="<%= candidate.photo %>" alt="<%= candidate.name %>" class="candidate-profile-photo">
+          <span style="position: absolute; bottom: 8px; right: 8px; background: #0f172a; color: white; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px;">
+            <%= candidate.ward %>
+          </span>
+        </div>
+
+        <div class="candidate-profile-info" style="flex: 1;">
+          <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <h2><%= candidate.name %></h2>
+            <span class="party-badge <%= candidate.partyBadge.toLowerCase() %>" style="margin-bottom: 0;">
+              <%= candidate.party %>
+            </span>
+          </div>
+
+          <p style="font-size: 15px; color: #64748b; font-style: italic; margin-top: 4px;">
+            "<%= candidate.slogan %>"
+          </p>
+
+          <div class="candidate-quick-pills">
+            <span><i class="fa-solid fa-user" style="color: #108e5e;"></i> आयु: <%= candidate.age %> वर्ष</span>
+            <span><i class="fa-solid fa-graduation-cap" style="color: #108e5e;"></i> शिक्षा: <%= candidate.education %></span>
+            <span><i class="fa-solid fa-location-dot" style="color: #108e5e;"></i> गाँव: <%= candidate.village %></span>
+            <span><i class="fa-solid fa-phone" style="color: #108e5e;"></i> मोबाइल: <%= candidate.phone %></span>
+          </div>
+
+          <div class="candidate-detail-actions">
+            <button id="pledgeVoteBtn" data-candidate-id="<%= candidate.id %>" class="btn btn-primary btn-lg candidate-detail-vote-btn">
+              <i class="fa-solid fa-hand-holding-heart"></i> मुझे वोट दें / समर्थन करें
+            </button>
+            <div class="candidate-detail-vote-count">
+              कुल समर्थन: <strong id="voteCountSpan" class="vote-num-<%= candidate.id %>" style="color: #e11d48; font-size: 17px;"><%= candidate.votes %></strong> ग्रामवासी
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Candidate Detailed Information Tabs -->
+    <div class="tabs-container">
+      
+      <div class="tabs-nav-scroll-wrap">
+        <div class="tabs-nav">
+          <button class="tab-link active" data-target="tab-intro">परिचय</button>
+          <button class="tab-link" data-target="tab-edu">शिक्षा व अनुभव</button>
+          <button class="tab-link" data-target="tab-vision">दृष्टि / वादे</button>
+          <button class="tab-link" data-target="tab-contact">संपर्क</button>
+        </div>
+      </div>
+
+      <!-- Tab 1: परिचय & उपलब्धियां -->
+      <div id="tab-intro" class="tab-pane active">
+        <div style="margin-bottom: 28px;">
+          <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 12px;">व्यक्तिगत परिचय</h3>
+          <p style="font-size: 15px; color: #475569; line-height: 1.8;">
+            <%= candidate.bio %>
+          </p>
+        </div>
+
+        <div>
+          <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 14px;">मुख्य उपलब्धियां</h3>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 12px;">
+            <% candidate.achievements.forEach(ach => { %>
+              <li style="display: flex; align-items: flex-start; gap: 12px; font-size: 14.5px; color: #334155;">
+                <span style="color: #108e5e; font-size: 18px; line-height: 1;">✓</span>
+                <span><%= ach %></span>
+              </li>
+            <% }); %>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Tab 2: शिक्षा व अनुभव -->
+      <div id="tab-edu" class="tab-pane">
+        <div style="margin-bottom: 24px;">
+          <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 12px;">शैक्षणिक योग्यता</h3>
+          <p style="font-size: 15px; color: #475569; line-height: 1.8;">
+            <%= candidate.educationDetails || candidate.education %>
+          </p>
+        </div>
+        <div>
+          <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 12px;">सामाजिक एवं प्रशासनिक अनुभव</h3>
+          <p style="font-size: 15px; color: #475569; line-height: 1.8;">
+            विगत 15 वर्षों से गाँव में विभिन्न जनकल्याणकारी समितियों, स्वच्छता अभियान एवं किसान सहायता शिविरों के माध्यम से सतत सेवा।
+          </p>
+        </div>
+      </div>
+
+      <!-- Tab 3: दृष्टि / वादे (Election Manifesto) -->
+      <div id="tab-vision" class="tab-pane">
+        <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 14px;">गाँव के विकास के लिए 5 मुख्य संकल्प</h3>
+        <div style="display: grid; grid-template-columns: 1fr; gap: 14px;">
+          <% candidate.promises.forEach((p, idx) => { %>
+            <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; gap: 16px;">
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: #108e5e; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">
+                <%= idx + 1 %>
+              </div>
+              <p style="font-size: 14.5px; color: #1e293b; font-weight: 500; margin: 0;"><%= p %></p>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+
+      <!-- Tab 4: संपर्क -->
+      <div id="tab-contact" class="tab-pane">
+        <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 14px;">कार्यालय एवं संपर्क विवरण</h3>
+        <div style="background: #f8fafc; border-radius: 10px; padding: 20px; border: 1px solid #e2e8f0; max-width: 600px;">
+          <p style="margin-bottom: 10px;"><strong>📍 पता:</strong> मकान संख्या 42, <%= candidate.village %>, वार्ड <%= candidate.ward %></p>
+          <p style="margin-bottom: 10px;"><strong>📞 फोन / व्हाट्सएप:</strong> <%= candidate.phone %></p>
+          <p style="margin-bottom: 10px;"><strong>⏰ जनसुनवाई समय:</strong> प्रातः 08:00 से 11:00 बजे (प्रतिदिन)</p>
+          <p><strong>✉️ ईमेल:</strong> <%= candidate.id %>@meragaon.gov.in</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Other Candidates Quick Carousel -->
+    <% if (otherCandidates && otherCandidates.length) { %>
+      <div style="margin-top: 48px;">
+        <h3 style="font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 20px;">अन्य उम्मीदवार</h3>
+        <div class="candidates-grid">
+          <% otherCandidates.forEach(oc => { %>
+            <div class="candidate-card">
+              <div class="candidate-avatar-wrap" style="width: 72px; height: 72px;">
+                <img src="<%= oc.photo %>" alt="<%= oc.name %>" class="candidate-avatar">
+              </div>
+              <h4 style="font-size: 16px; font-weight: 700;"><%= oc.name %></h4>
+              <span class="party-badge <%= oc.partyBadge.toLowerCase() %>" style="margin: 4px auto 10px;"><%= oc.party %></span>
+              <a href="/candidate/<%= oc.id %>" class="btn btn-outline btn-sm">प्रोफाइल देखें</a>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
+  </div>
+</div>
+
+<%- include('partials/footer') %>

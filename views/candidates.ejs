@@ -1,0 +1,97 @@
+<%- include('partials/header') %>
+
+<div class="section" style="padding-top: 36px;">
+  <div class="container">
+
+    <!-- Breadcrumb -->
+    <div style="font-size: 13.5px; color: #64748b; margin-bottom: 20px;">
+      <a href="/" style="color: #108e5e;"><i class="fa-solid fa-house"></i> होम</a> / <span>उम्मीदवार</span>
+    </div>
+
+    <!-- Page Header & Filters -->
+    <div class="candidate-page-header">
+      <div>
+        <h1 class="page-main-title">सरपंच पद के उम्मीदवार</h1>
+        <p class="page-subtitle">गाँव के भविष्य और विकास के लिए समर्पित प्रत्याशी</p>
+      </div>
+
+      <!-- Search & Ward Dropdown -->
+      <div class="candidate-search-filter-box">
+        <div class="candidate-search-wrap">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="candidateSearchInput" placeholder="उम्मीदवार का नाम खोजें..." aria-label="उम्मीदवार खोजें">
+        </div>
+
+        <select id="candidateWardSelect" class="candidate-ward-select" aria-label="वार्ड चुनें">
+          <option value="all">सभी वार्ड</option>
+          <option value="वार्ड 1">वार्ड 1</option>
+          <option value="वार्ड 2">वार्ड 2</option>
+          <option value="वार्ड 3">वार्ड 3</option>
+          <option value="वार्ड 4">वार्ड 4</option>
+          <option value="वार्ड 7">वार्ड 7</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Party Filter Chips -->
+    <div class="filter-tabs-scroll-wrap">
+      <div class="filter-tabs party-filter-tabs">
+        <button class="filter-tab party-filter-chip active" data-party="all">सभी</button>
+        <button class="filter-tab party-filter-chip" data-party="BJP">भारतीय जनता पार्टी (BJP)</button>
+        <button class="filter-tab party-filter-chip" data-party="INC">कांग्रेस</button>
+        <button class="filter-tab party-filter-chip" data-party="ADU">अपना दल (यूनाइटेड)</button>
+        <button class="filter-tab party-filter-chip" data-party="IND">निर्दलीय</button>
+      </div>
+    </div>
+
+    <!-- Candidate List View -->
+    <div class="candidate-list-container">
+      <% candidates.forEach(c => { %>
+        <div class="candidate-list-item candidate-list-card" data-name="<%= c.name %>" data-party="<%= c.partyBadge %>" data-ward="<%= c.ward %>">
+          <div class="candidate-card-profile">
+            <div class="candidate-card-avatar-box">
+              <img src="<%= c.photo %>" alt="<%= c.name %>" class="candidate-list-avatar">
+              <span class="candidate-list-ward"><%= c.ward %></span>
+            </div>
+            <div class="candidate-card-details">
+              <div class="candidate-title-party">
+                <h3 class="candidate-title-name"><%= c.name %></h3>
+                <span class="party-badge <%= c.partyBadge.toLowerCase() %>">
+                  <%= c.party %>
+                </span>
+              </div>
+              <p class="candidate-card-slogan">"<%= c.slogan %>"</p>
+              <div class="candidate-card-badges">
+                <span><i class="fa-solid fa-cake-candles"></i> <%= c.age %> वर्ष</span>
+                <span><i class="fa-solid fa-graduation-cap"></i> <%= c.education %></span>
+                <span><i class="fa-solid fa-location-dot"></i> <%= c.village %></span>
+                <span><i class="fa-solid fa-heart" style="color: #e11d48;"></i> <strong class="vote-num-<%= c.id %>" style="color: #e11d48;"><%= c.votes %></strong> समर्थक</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="candidate-card-actions">
+            <button type="button" onclick="pledgeSupport(event, '<%= c.id %>', this)" class="btn btn-outline btn-sm candidate-pledge-btn">
+              <i class="fa-solid fa-heart"></i> <span class="btn-text">समर्थन दें</span> (<span class="vote-num-<%= c.id %>"><%= c.votes %></span>)
+            </button>
+            <a href="/candidate/<%= c.id %>" class="btn btn-primary btn-sm candidate-profile-btn">
+              प्रोफाइल देखें <i class="fa-solid fa-chevron-right" style="font-size: 11px;"></i>
+            </a>
+          </div>
+        </div>
+      <% }); %>
+    </div>
+
+    <!-- Pagination -->
+    <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 36px;">
+      <button class="filter-tab" style="padding: 6px 12px;" disabled>&larr;</button>
+      <button class="filter-tab active" style="padding: 6px 14px;">1</button>
+      <button class="filter-tab" style="padding: 6px 14px;">2</button>
+      <button class="filter-tab" style="padding: 6px 14px;">3</button>
+      <button class="filter-tab" style="padding: 6px 12px;">&rarr;</button>
+    </div>
+
+  </div>
+</div>
+
+<%- include('partials/footer') %>

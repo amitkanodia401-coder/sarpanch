@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= pageTitle || 'मेरा गाँव - ग्राम पंचायत पोर्टल' %></title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="announcement-bar">
+    <div class="container announcement-inner">
+      <span class="announcement-text">🌾 <strong>ग्राम पंचायत पोर्टल:</strong> पारदर्शी शासन, सर्वांगीण विकास एवं सशक्त गाँव</span>
+      <div class="announcement-contact">
+        <a href="tel:18001234567"><i class="fa-solid fa-phone"></i> हेल्पलाइन: 1800-123-4567</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navigation Header -->
+  <header class="site-header">
+    <div class="container navbar">
+      <a href="/" class="brand-logo">
+        <div class="brand-icon">
+          <i class="fa-solid fa-seedling"></i>
+        </div>
+        <div class="brand-text">
+          <h1>मेरा गाँव</h1>
+          <span>ग्राम पंचायत पोर्टल</span>
+        </div>
+      </a>
+
+      <nav class="desktop-nav">
+        <ul class="nav-links">
+          <li><a href="/" class="<%= locals.activeNav === 'home' ? 'active' : '' %>">होम</a></li>
+          <li><a href="/candidates" class="<%= locals.activeNav === 'candidates' ? 'active' : '' %>">उम्मीदवार</a></li>
+          <li><a href="/works" class="<%= locals.activeNav === 'works' ? 'active' : '' %>">विकास कार्य</a></li>
+          <li><a href="/duties" class="<%= locals.activeNav === 'duties' ? 'active' : '' %>">सरपंच के कर्तव्य</a></li>
+          <li><a href="/complaint" class="<%= locals.activeNav === 'complaint' ? 'active' : '' %>">शिकायत / सुझाव</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="/complaint" class="btn btn-primary btn-sm nav-complaint-btn">
+          <i class="fa-solid fa-pen-to-square"></i> <span class="btn-text">समस्या दर्ज करें</span>
+        </a>
+        <!-- Mobile Menu Toggle Hamburger Button -->
+        <button type="button" class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="मोबाइल मेनू खोलें">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Drawer & Backdrop -->
+  <div class="mobile-nav-backdrop" id="mobileNavBackdrop"></div>
+  <aside class="mobile-nav-drawer" id="mobileNavDrawer" aria-label="मोबाइल नेविगेशन">
+    <div class="mobile-drawer-header">
+      <div class="brand-logo">
+        <div class="brand-icon" style="width: 36px; height: 36px; font-size: 18px;">
+          <i class="fa-solid fa-seedling"></i>
+        </div>
+        <div class="brand-text">
+          <h2 style="font-size: 18px; font-weight: 800; color: #096340; margin: 0; line-height: 1.1;">मेरा गाँव</h2>
+          <span style="font-size: 11px; color: #64748b;">ग्राम पंचायत पोर्टल</span>
+        </div>
+      </div>
+      <button type="button" class="mobile-drawer-close" id="mobileMenuClose" aria-label="मेनू बंद करें">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="mobile-drawer-body">
+      <ul class="mobile-nav-links">
+        <li>
+          <a href="/" class="<%= locals.activeNav === 'home' ? 'active' : '' %>">
+            <span class="nav-icon"><i class="fa-solid fa-house"></i></span>
+            <span>होम पेज</span>
+          </a>
+        </li>
+        <li>
+          <a href="/candidates" class="<%= locals.activeNav === 'candidates' ? 'active' : '' %>">
+            <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
+            <span>सरपंच पद के उम्मीदवार</span>
+          </a>
+        </li>
+        <li>
+          <a href="/works" class="<%= locals.activeNav === 'works' ? 'active' : '' %>">
+            <span class="nav-icon"><i class="fa-solid fa-helmet-safety"></i></span>
+            <span>ग्राम विकास कार्य व वाउचर</span>
+          </a>
+        </li>
+        <li>
+          <a href="/duties" class="<%= locals.activeNav === 'duties' ? 'active' : '' %>">
+            <span class="nav-icon"><i class="fa-solid fa-list-check"></i></span>
+            <span>सरपंच के कर्तव्य</span>
+          </a>
+        </li>
+        <li>
+          <a href="/complaint" class="<%= locals.activeNav === 'complaint' ? 'active' : '' %>">
+            <span class="nav-icon"><i class="fa-solid fa-comment-dots"></i></span>
+            <span>समस्या / शिकायत दर्ज करें</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="mobile-drawer-cta">
+        <a href="/complaint" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px; font-size: 14px;">
+          <i class="fa-solid fa-pen-to-square"></i> ऑनलाइन शिकायत दर्ज करें
+        </a>
+      </div>
+
+      <div class="mobile-drawer-info">
+        <h4><i class="fa-solid fa-circle-info" style="color: #108e5e;"></i> सहायता एवं संपर्क</h4>
+        <p><i class="fa-solid fa-phone"></i> <strong>हेल्पलाइन:</strong> 1800-123-4567</p>
+        <p><i class="fa-regular fa-clock"></i> <strong>कार्यालय:</strong> सोम-शनि, 10:00 AM - 5:00 PM</p>
+        <p><i class="fa-solid fa-shield-halved"></i> <strong>पंचायत:</strong> पारदर्शी डिजिटल सेवा</p>
+      </div>
+    </div>
+  </aside>
