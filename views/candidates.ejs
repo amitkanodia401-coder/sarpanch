@@ -11,7 +11,12 @@
     <!-- Page Header & Filters -->
     <div class="candidate-page-header">
       <div>
-        <h1 class="page-main-title">सरपंच पद के उम्मीदवार</h1>
+        <h1 class="page-main-title" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+          सरपंच पद के उम्मीदवार
+          <span class="live-indicator-badge">
+            <span class="live-dot-pulse"></span> लाइव समर्थन
+          </span>
+        </h1>
         <p class="page-subtitle">गाँव के भविष्य और विकास के लिए समर्पित प्रत्याशी</p>
       </div>
 
@@ -71,8 +76,24 @@
           </div>
 
           <div class="candidate-card-actions">
-            <button type="button" onclick="pledgeSupport(event, '<%= c.id %>', this)" class="btn btn-outline btn-sm candidate-pledge-btn">
-              <i class="fa-solid fa-heart"></i> <span class="btn-text">समर्थन दें</span> (<span class="vote-num-<%= c.id %>"><%= c.votes %></span>)
+            <% 
+              const isVoted = locals.votedCandidate;
+              const isThisVoted = (isVoted === c.id);
+            %>
+            <button type="button" 
+                    data-candidate-id="<%= c.id %>" 
+                    onclick="pledgeSupport(event, '<%= c.id %>', this)" 
+                    class="btn btn-sm candidate-pledge-btn <%= isThisVoted ? 'voted-this' : (isVoted ? 'voted-other' : 'btn-outline') %>"
+                    style="<%= isThisVoted ? 'background: #108e5e; border-color: #108e5e; color: #fff;' : (isVoted ? 'background: #f1f5f9; border-color: #cbd5e1; color: #64748b; cursor: not-allowed;' : '') %>"
+                    <%= isVoted ? 'disabled' : '' %>
+                    title="<%= isThisVoted ? 'आपने इस उम्मीदवार को समर्थन दिया है' : (isVoted ? 'आप पहले ही समर्थन दे चुके हैं' : 'समर्थन दें') %>">
+              <% if (isThisVoted) { %>
+                <i class="fa-solid fa-circle-check"></i> <span class="btn-text">समर्थन दिया गया</span> (<span class="vote-num-<%= c.id %>"><%= c.votes %></span>)
+              <% } else if (isVoted) { %>
+                <i class="fa-solid fa-lock" style="font-size: 11px;"></i> <span class="btn-text">समर्थन दिया</span> (<span class="vote-num-<%= c.id %>"><%= c.votes %></span>)
+              <% } else { %>
+                <i class="fa-solid fa-heart"></i> <span class="btn-text">समर्थन दें</span> (<span class="vote-num-<%= c.id %>"><%= c.votes %></span>)
+              <% } %>
             </button>
             <a href="/candidate/<%= c.id %>" class="btn btn-primary btn-sm candidate-profile-btn">
               प्रोफाइल देखें <i class="fa-solid fa-chevron-right" style="font-size: 11px;"></i>

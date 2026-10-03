@@ -86,11 +86,52 @@ app.use(async (req, res, next) => {
   }
 });
 
-// Simple session simulator via cookies
+// Supabase client initialization for real-time cloud data sync
+let supabase = null;
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://tleghzrcryjkitxlzzpj.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_publishable_F2dar3UriRrmontzl-mjsQ_VGUXHUng';
+if (SUPABASE_URL && SUPABASE_KEY) {
+  try {
+    const { createClient } = require('@supabase/supabase-js');
+    supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  } catch (err) {
+    console.warn('Supabase initialization warning:', err.message);
+  }
+}
+
+// Cookie parser utility
+function parseCookies(header) {
+  const list = {};
+  if (!header) return list;
+  header.split(';').forEach(cookie => {
+    const parts = cookie.split('=');
+    if (parts.length >= 2) {
+      list[parts[0].trim()] = decodeURIComponent(parts.slice(1).join('=').trim());
+    }
+  });
+  return list;
+}
+
+// Client IP extractor
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) return String(forwarded).split(',')[0].trim();
+  return req.socket?.remoteAddress || '';
+}
+
+const votedIps = new Set();
+let votesCache = { time: 0, data: null };
+
+// Global session & visitor state via cookies
 app.use((req, res, next) => {
-  const cookieHeader = req.headers.cookie || '';
-  req.isAdmin = cookieHeader.includes('admin_auth=true');
+  const cookies = parseCookies(req.headers.cookie || '');
+  req.isAdmin = (cookies['admin_auth'] === 'true') || (req.headers.cookie || '').includes('admin_auth=true');
   res.locals.isAdmin = req.isAdmin;
+
+  // Single-vote tracking: which candidate did this visitor support
+  req.votedCandidate = cookies['sarpanch_voted'] || null;
+  res.locals.votedCandidate = req.votedCandidate;
+
   try {
     res.locals.villageInfo = db.getVillageInfo();
     res.locals.gramSabha = db.getGramSabha();
@@ -278,18 +319,107 @@ app.get('/admin/settings', (req, res) => res.redirect('/admin?tab=settings'));
 // REST APIs (AJAX & Form submissions)
 // ----------------------------------------------------
 
-// Support / Vote pledge
-app.post('/api/vote/:id', (req, res) => {
-  const updatedVotes = db.pledgeVote(req.params.id);
-  if (updatedVotes !== null) {
-    return res.json({ success: true, votes: updatedVotes, message: 'समर्थन दर्ज करने के लिए धन्यवाद!' });
+// Support / Vote pledge - STRICT ONE VOTE PER VISITOR + REAL-TIME SYNC
+app.post('/api/vote/:id', async (req, res) => {
+  const candidateId = String(req.params.id);
+  const cookies = parseCookies(req.headers.cookie || '');
+  const alreadyVotedCandidate = cookies['sarpanch_voted'];
+  const clientIp = getClientIp(req);
+
+  // 1. Strict check: If already voted, deny with 400
+  if (alreadyVotedCandidate) {
+    return res.status(400).json({
+      success: false,
+      alreadyVoted: true,
+      votedCandidate: alreadyVotedCandidate,
+      message: 'आप पहले ही अपना समर्थन दर्ज कर चुके हैं! एक नागरिक केवल एक बार समर्थन दे सकता है।'
+    });
   }
-  return res.status(404).json({ success: false, message: 'उम्मीदवार नहीं मिला' });
+
+  // 2. Increment in local SQLite / db.json
+  const updatedVotes = db.pledgeVote(candidateId);
+  if (updatedVotes === null) {
+    return res.status(404).json({ success: false, message: 'उम्मीदवार नहीं मिला' });
+  }
+
+  // 3. Sync to Supabase in real-time if configured
+  if (supabase) {
+    try {
+      const { data } = await supabase.from('candidates').select('votes').eq('id', candidateId).single();
+      const currentSupabaseVotes = (data && typeof data.votes === 'number') ? data.votes : (updatedVotes - 1);
+      await supabase.from('candidates').update({ votes: currentSupabaseVotes + 1 }).eq('id', candidateId);
+    } catch (e) {
+      console.warn('Supabase vote sync error:', e.message);
+    }
+  }
+
+  if (clientIp) {
+    if (votedIps.size > 20000) votedIps.clear();
+    votedIps.add(clientIp);
+  }
+
+  // Clear cache for instant real-time poll update
+  votesCache = { time: 0, data: null };
+
+  // 4. Set persistent 1-year cookie so browser permanently locks future voting
+  res.setHeader('Set-Cookie', [
+    `sarpanch_voted=${encodeURIComponent(candidateId)}; Path=/; Max-Age=31536000; SameSite=Lax`
+  ]);
+
+  return res.json({
+    success: true,
+    candidateId,
+    votes: updatedVotes,
+    message: 'समर्थन दर्ज करने के लिए धन्यवाद! आपका समर्थन सफलतापूर्वक दर्ज हो गया है।'
+  });
+});
+
+// Real-Time live votes polling endpoint (returns current vote counts for all candidates)
+app.get('/api/votes', async (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  const now = Date.now();
+
+  // Short cache (1.5s) to ensure ultra-low latency while avoiding excessive DB load
+  if (supabase && (now - votesCache.time < 1500) && votesCache.data) {
+    return res.json({ success: true, votes: votesCache.data });
+  }
+
+  if (supabase) {
+    try {
+      const { data, error } = await supabase.from('candidates').select('id, votes');
+      if (!error && Array.isArray(data) && data.length > 0) {
+        const map = {};
+        data.forEach(c => { map[c.id] = c.votes || 0; });
+        votesCache = { time: now, data: map };
+        return res.json({ success: true, votes: map });
+      }
+    } catch (e) {
+      // Fallback to local DB
+    }
+  }
+
+  const candidates = db.getCandidates();
+  const map = {};
+  candidates.forEach(c => { map[c.id] = c.votes || 0; });
+  votesCache = { time: now, data: map };
+  return res.json({ success: true, votes: map });
 });
 
 // Reset all candidate votes to 0 (Admin only)
-app.post('/api/votes/reset', requireAdmin, (req, res) => {
+app.post('/api/votes/reset', requireAdmin, async (req, res) => {
   db.resetAllVotes();
+
+  if (supabase) {
+    try {
+      await supabase.from('candidates').update({ votes: 0 }).neq('id', '___none___');
+    } catch (e) {
+      console.error('Supabase reset votes error:', e);
+    }
+  }
+
+  votesCache = { time: 0, data: null };
+  votedIps.clear();
+
   if (req.headers['content-type']?.includes('application/json') || req.headers['accept']?.includes('application/json') || req.xhr || req.query.format === 'json') {
     return res.json({ success: true, message: 'सभी उम्मीदवारों का समर्थन 0 कर दिया गया है।' });
   }

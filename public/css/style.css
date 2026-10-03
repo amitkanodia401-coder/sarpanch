@@ -2534,3 +2534,78 @@ button, input, select, textarea {
     display: none; /* Keep hero cleaner on tiny screens */
   }
 }
+
+/* =====================================================
+   REAL-TIME VOTE & SINGLE-VOTE LOCK STYLES
+   ===================================================== */
+.live-indicator-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #047857;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  vertical-align: middle;
+  letter-spacing: 0.2px;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.1);
+}
+
+.live-dot-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+  box-shadow: 0 0 0 rgba(16, 185, 129, 0.6);
+  animation: liveDotPulseAnim 1.6s infinite ease-in-out;
+}
+
+@keyframes liveDotPulseAnim {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+  70% { transform: scale(1.15); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+@keyframes voteNumberPulseAnim {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.38); color: #059669 !important; text-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+  100% { transform: scale(1); }
+}
+
+.vote-num-pulse {
+  display: inline-block;
+  animation: voteNumberPulseAnim 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Supported Candidate Button State */
+.candidate-pledge-btn.voted-this,
+.candidate-detail-vote-btn.voted-this {
+  background: #108e5e !important;
+  border-color: #108e5e !important;
+  color: #ffffff !important;
+  box-shadow: 0 3px 10px rgba(16, 142, 94, 0.3) !important;
+  cursor: default !important;
+  pointer-events: none !important;
+}
+
+/* Other Candidates Buttons Once Voted */
+.candidate-pledge-btn.voted-other,
+.candidate-detail-vote-btn.voted-other {
+  background: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #64748b !important;
+  cursor: not-allowed !important;
+  opacity: 0.82 !important;
+  pointer-events: auto !important;
+}
+
+.candidate-pledge-btn.voted-other:hover,
+.candidate-detail-vote-btn.voted-other:hover {
+  background: #e2e8f0 !important;
+  border-color: #94a3b8 !important;
+  color: #475569 !important;
+}

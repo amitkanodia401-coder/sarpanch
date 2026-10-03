@@ -40,11 +40,29 @@
           </div>
 
           <div class="candidate-detail-actions">
-            <button id="pledgeVoteBtn" data-candidate-id="<%= candidate.id %>" class="btn btn-primary btn-lg candidate-detail-vote-btn">
-              <i class="fa-solid fa-hand-holding-heart"></i> मुझे वोट दें / समर्थन करें
+            <% 
+              const isVoted = locals.votedCandidate;
+              const isThisVoted = (isVoted === candidate.id);
+            %>
+            <button id="pledgeVoteBtn" 
+                    data-candidate-id="<%= candidate.id %>" 
+                    class="btn btn-lg candidate-detail-vote-btn candidate-pledge-btn <%= isThisVoted ? 'voted-this' : (isVoted ? 'voted-other' : 'btn-primary') %>"
+                    style="<%= isThisVoted ? 'background: #108e5e; border-color: #108e5e; color: #fff;' : (isVoted ? 'background: #f1f5f9; border-color: #cbd5e1; color: #64748b; cursor: not-allowed;' : '') %>"
+                    <%= isVoted ? 'disabled' : '' %>
+                    title="<%= isThisVoted ? 'आपने इस उम्मीदवार को समर्थन दिया है' : (isVoted ? 'आप पहले ही समर्थन दे चुके हैं' : 'मुझे वोट दें / समर्थन करें') %>">
+              <% if (isThisVoted) { %>
+                <i class="fa-solid fa-circle-check"></i> <span class="btn-text">आपका समर्थन दर्ज है</span>
+              <% } else if (isVoted) { %>
+                <i class="fa-solid fa-lock"></i> <span class="btn-text">समर्थन दिया जा चुका है</span>
+              <% } else { %>
+                <i class="fa-solid fa-hand-holding-heart"></i> <span class="btn-text">मुझे वोट दें / समर्थन करें</span>
+              <% } %>
             </button>
             <div class="candidate-detail-vote-count">
               कुल समर्थन: <strong id="voteCountSpan" class="vote-num-<%= candidate.id %>" style="color: #e11d48; font-size: 17px;"><%= candidate.votes %></strong> ग्रामवासी
+              <span class="live-indicator-badge" style="font-size: 11px; padding: 2px 8px; margin-left: 6px;">
+                <span class="live-dot-pulse" style="width: 6px; height: 6px;"></span> लाइव
+              </span>
             </div>
           </div>
         </div>
