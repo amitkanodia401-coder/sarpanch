@@ -13,73 +13,47 @@
       <span class="party-badge bjp" style="margin-bottom: 8px;">गाँव की आवाज़</span>
       <h1 style="font-size: 32px; font-weight: 800; color: #1e293b; margin-bottom: 12px;">सरपंच को क्या-क्या करना चाहिए?</h1>
       <p style="font-size: 16px; color: #64748b;">
-        गाँव के समग्र विकास और खुशहाली के लिए आने वाले समय में ये 5 मुख्य स्तंभ मजबूत करने अनिवार्य हैं:
+        <%= (locals.villageInfo && villageInfo.dutiesSubtitle) ? villageInfo.dutiesSubtitle : 'गाँव के समग्र विकास और खुशहाली के लिए आने वाले समय में ये मुख्य स्तंभ मजबूत करने अनिवार्य हैं:' %>
       </p>
+      <% if (locals.isAdmin) { %>
+        <div style="margin-top: 14px;">
+          <a href="/admin?tab=duties" class="btn btn-outline btn-sm" style="background: #fff; font-size: 13px;">
+            <i class="fa-solid fa-pen-to-square"></i> एडमिन पैनल से कर्तव्य प्रबंधित करें / नया जोड़ें
+          </a>
+        </div>
+      <% } %>
     </div>
 
-    <!-- 5 Action Pillars List (Screen 6) -->
+    <!-- Dynamic Action Pillars List (Screen 6) -->
     <div class="duties-list">
-      
-      <!-- 1. बुनियादी सुविधाएं -->
-      <div class="duty-card">
-        <div class="duty-num" style="background: #0ea5e9;">1</div>
-        <div class="duty-content">
-          <h3>बुनियादी सुविधाएं</h3>
-          <p class="duty-summary" style="color: #0284c7;">• सड़क, पानी, बिजली, नाली की व्यवस्था</p>
-          <p class="duty-desc">
-            हर घर तक पक्की संपर्क सड़क, 24 घंटे निर्बाध बिजली, नल से स्वच्छ पेयजल और जलभराव रोकने हेतु भूमिगत नालियों का निर्माण।
-          </p>
+      <% if (locals.duties && duties.length > 0) { %>
+        <% duties.forEach((duty, idx) => { %>
+          <div class="duty-card">
+            <div class="duty-num" style="background: <%= duty.color || '#108e5e' %>;">
+              <%= duty.num || (idx + 1) %>
+            </div>
+            <div class="duty-content">
+              <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                <% if (duty.icon) { %>
+                  <i class="fa-solid <%= duty.icon %>" style="color: <%= duty.color || '#108e5e' %>; font-size: 17px;"></i>
+                <% } %>
+                <h3 style="margin-bottom: 0;"><%= duty.title %></h3>
+              </div>
+              <% if (duty.summary) { %>
+                <p class="duty-summary" style="color: <%= duty.color || '#108e5e' %>;"><%= duty.summary %></p>
+              <% } %>
+              <p class="duty-desc">
+                <%= duty.details || duty.desc || '' %>
+              </p>
+            </div>
+          </div>
+        <% }); %>
+      <% } else { %>
+        <div style="text-align: center; padding: 40px; background: #fff; border-radius: 12px; border: 1px dashed #cbd5e1;">
+          <i class="fa-solid fa-clipboard-list" style="font-size: 36px; color: #94a3b8; margin-bottom: 12px;"></i>
+          <p style="font-size: 16px; color: #64748b; margin: 0;">अभी कोई कर्तव्य सूची उपलब्ध नहीं है।</p>
         </div>
-      </div>
-
-      <!-- 2. शिक्षा और स्वास्थ्य -->
-      <div class="duty-card">
-        <div class="duty-num" style="background: #10b981;">2</div>
-        <div class="duty-content">
-          <h3>शिक्षा और स्वास्थ्य</h3>
-          <p class="duty-summary" style="color: #059669;">• विद्यालयों का सुधार • स्वास्थ्य केंद्र और टीकाकरण व्यवस्था</p>
-          <p class="duty-desc">
-            गाँव के प्राथमिक व माध्यमिक विद्यालयों में आधुनिक डिजिटल शिक्षा, लाइब्रेरी एवं प्राथमिक स्वास्थ्य केंद्र में 24 घंटे डॉक्टर व दवाइयों की सुलभता।
-          </p>
-        </div>
-      </div>
-
-      <!-- 3. कृषि और रोजगार -->
-      <div class="duty-card">
-        <div class="duty-num" style="background: #f59e0b;">3</div>
-        <div class="duty-content">
-          <h3>कृषि और रोजगार</h3>
-          <p class="duty-summary" style="color: #d97706;">• किसानों के लिए योजनाएं • रोजगार के नए अवसर</p>
-          <p class="duty-desc">
-            पीएम किसान सम्मान निधि, समय पर खाद-बीज का वितरण, मनरेगा में निष्पक्ष जॉब कार्ड व मजदूरी, और युवाओं के लिए वोकेशनल ट्रेनिंग सेंटर।
-          </p>
-        </div>
-      </div>
-
-      <!-- 4. सामाजिक न्याय -->
-      <div class="duty-card">
-        <div class="duty-num" style="background: #8b5cf6;">4</div>
-        <div class="duty-content">
-          <h3>सामाजिक न्याय</h3>
-          <p class="duty-summary" style="color: #7c3aed;">• सभी वर्गों के लिए समान अवसर • महिला, बुजुर्ग, दिव्यांगों के लिए विशेष योजनाएं</p>
-          <p class="duty-desc">
-            पेंशन योजनाओं का समय पर भुगतान, आवास योजना में पारदर्शी चयन, महिला स्वयं सहायता समूहों को प्रोत्साहन और गाँव में बिना भेदभाव के न्याय।
-          </p>
-        </div>
-      </div>
-
-      <!-- 5. डिजिटल और पारदर्शिता -->
-      <div class="duty-card">
-        <div class="duty-num" style="background: #06b6d4;">5</div>
-        <div class="duty-content">
-          <h3>डिजिटल और पारदर्शिता</h3>
-          <p class="duty-summary" style="color: #0891b2;">• ऑनलाइन शिकायतें, राशन, पेंशन • सभी जानकारी पारदर्शी करना</p>
-          <p class="duty-desc">
-            गाँव के विकास फंड का सार्वजनिक ऑडिट, ई-ग्राम स्वराज पोर्टल पर हर एक रुपये का हिसाब और घर बैठे सरकारी प्रमाण पत्र व शिकायत निवारण।
-          </p>
-        </div>
-      </div>
-
+      <% } %>
     </div>
 
     <!-- Bottom Pledge Banner (Screen 6 Banner) -->

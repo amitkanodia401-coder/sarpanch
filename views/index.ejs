@@ -5,15 +5,22 @@
   <div class="container hero-inner-container">
     <div class="hero-content">
       <div class="hero-tag">
-        <i class="fa-solid fa-award"></i> विकास भी विश्वास भी
+        <i class="fa-solid fa-award"></i> <%= (locals.villageInfo && villageInfo.heroTag) ? villageInfo.heroTag : 'विकास भी विश्वास भी' %>
       </div>
-      <h1 class="hero-title">मेरा गाँव, <br>मेरा भविष्य</h1>
+      <h1 class="hero-title"><%- (locals.villageInfo && villageInfo.heroTitle) ? villageInfo.heroTitle : 'मेरा गाँव, <br>मेरा भविष्य' %></h1>
       <p class="hero-subtitle">
-        <span><i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> पारदर्शी पंचायत</span>
-        <span class="sep">•</span>
-        <span><i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> बेहतर विकास</span>
-        <span class="sep">•</span>
-        <span><i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> समृद्ध गांव</span>
+        <% if (locals.villageInfo && villageInfo.heroSubtitle) { %>
+          <% villageInfo.heroSubtitle.split('•').forEach((point, i, arr) => { %>
+            <span><i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> <%= point.trim() %></span>
+            <% if (i < arr.length - 1) { %><span class="sep">•</span><% } %>
+          <% }); %>
+        <% } else { %>
+          <span><i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> पारदर्शी पंचायत</span>
+          <span class="sep">•</span>
+          <span><i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> बेहतर विकास</span>
+          <span class="sep">•</span>
+          <span><i class="fa-solid fa-circle-check" style="color: #4ade80;"></i> समृद्ध गांव</span>
+        <% } %>
       </p>
 
       <!-- Search Box -->
@@ -321,7 +328,7 @@
 
     <!-- 5. OUR VILLAGE SHOWCASE CARD -->
     <div class="village-showcase">
-      <img src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=500&fit=crop" alt="हमारा गाँव" class="village-showcase-img">
+      <img src="<%= (locals.villageInfo && villageInfo.showcaseImage) ? villageInfo.showcaseImage : 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=500&fit=crop' %>" alt="हमारा गाँव" class="village-showcase-img">
       <div class="village-showcase-content">
         <span class="party-badge bjp" style="margin-bottom: 8px;">हमारा गौरव</span>
         <h3>हमारा गाँव: <%= villageInfo.name %></h3>

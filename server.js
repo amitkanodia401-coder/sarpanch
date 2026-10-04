@@ -420,8 +420,39 @@ async function getCandidatesWithLiveVotes() {
   }));
 }
 
+let settingsSyncedFromSupabase = false;
+async function syncSettingsFromSupabase() {
+  if (!supabase || settingsSyncedFromSupabase) return;
+  try {
+    const { data: setRows } = await supabase.from('settings').select('key, value').in('key', ['villageInfo', 'gramSabha', 'duties']);
+    if (Array.isArray(setRows)) {
+      setRows.forEach(row => {
+        if (row.value) {
+          try {
+            const parsed = JSON.parse(row.value);
+            if (row.key === 'villageInfo' && parsed && parsed.name) {
+              db.setSetting('villageInfo', parsed);
+            } else if (row.key === 'gramSabha' && parsed && parsed.title) {
+              db.setSetting('gramSabha', parsed);
+            } else if (row.key === 'duties' && Array.isArray(parsed) && parsed.length > 0) {
+              db.setSetting('duties', parsed);
+            }
+          } catch (e) {}
+        }
+      });
+      settingsSyncedFromSupabase = true;
+    }
+  } catch (err) {
+    console.warn('Could not sync settings from Supabase:', err.message);
+  }
+}
+
 // Global session & visitor state via cookies
 app.use(async (req, res, next) => {
+  if (!settingsSyncedFromSupabase) {
+    await syncSettingsFromSupabase();
+  }
+
   const cookies = parseCookies(req.headers.cookie || '');
   req.isAdmin = (cookies['admin_auth'] === 'true') || (req.headers.cookie || '').includes('admin_auth=true');
   res.locals.isAdmin = req.isAdmin;
@@ -979,14 +1010,34 @@ app.post('/api/complaints/:id/status', requireAdmin, (req, res) => {
 });
 
 // Update Village Settings
-app.post('/api/settings', requireAdmin, (req, res) => {
-  db.updateVillageInfo(req.body);
+app.post('/api/settings', requireAdmin, async (req, res) => {
+  const updated = db.updateVillageInfo(req.body);
+  if (supabase) {
+    try {
+      await supabase.from('settings').upsert({
+        key: 'villageInfo',
+        value: JSON.stringify(updated)
+      });
+    } catch (e) {
+      console.warn('Could not sync villageInfo to Supabase:', e.message);
+    }
+  }
   res.redirect('/admin?tab=settings&saved=1');
 });
 
 // Update Gram Sabha Meeting Details
-app.post('/api/gram-sabha', requireAdmin, (req, res) => {
+app.post('/api/gram-sabha', requireAdmin, async (req, res) => {
   const updated = db.updateGramSabha(req.body);
+  if (supabase) {
+    try {
+      await supabase.from('settings').upsert({
+        key: 'gramSabha',
+        value: JSON.stringify(updated)
+      });
+    } catch (e) {
+      console.warn('Could not sync gramSabha to Supabase:', e.message);
+    }
+  }
   if (req.headers['content-type']?.includes('application/json')) {
     return res.json({ success: true, gramSabha: updated, message: 'आगामी ग्राम सभा बैठक सूचना सफलतापूर्वक सुरक्षित हो गई!' });
   }
@@ -994,16 +1045,79 @@ app.post('/api/gram-sabha', requireAdmin, (req, res) => {
   res.redirect(`/admin?tab=${redirectTab}&saved=gram_sabha`);
 });
 
-// Export CSV for Works
-app.get('/api/export/works.csv', requireAdmin, (req, res) => {
-  const works = db.getWorks();
-  let csv = 'ID,कार्य का नाम,योजना,स्वीकृत राशि (₹),खर्च राशि (₹),स्थिति,प्रगति (%),ठेकेदार\n';
-  works.forEach(w => {
-    csv += `"${w.id}","${w.title.replace(/"/g, '""')}","${w.scheme.replace(/"/g, '""')}","${w.budget}","${w.spent}","${w.status}","${w.progress}%","${w.contractor}"\n`;
-  });
-  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-  res.setHeader('Content-Disposition', 'attachment; filename="vikas-karya-report.csv"');
-  res.send('\uFEFF' + csv); // Include BOM for Excel in Hindi
+// Duty Management APIs (सरपंच के कर्तव्य व भविष्य योजना)
+app.post('/api/duties/add', requireAdmin, async (req, res) => {
+  try {
+    const newDuty = db.addDuty(req.body);
+    if (supabase) {
+      try {
+        await supabase.from('settings').upsert({
+          key: 'duties',
+          value: JSON.stringify(db.getDuties())
+        });
+      } catch (e) {
+        console.warn('Could not sync duties to Supabase:', e.message);
+      }
+    }
+    if (req.headers['content-type']?.includes('application/json')) {
+      return res.json({ success: true, duty: newDuty, message: 'कर्तव्य सफलतापूर्वक जोड़ दिया गया!' });
+    }
+    res.redirect('/admin?tab=duties&saved=1');
+  } catch (err) {
+    console.error('Error adding duty:', err);
+    res.redirect('/admin?tab=duties&error=1');
+  }
+});
+
+app.post('/api/duties/:num/edit', requireAdmin, async (req, res) => {
+  try {
+    const updated = db.updateDuty(req.params.num, req.body);
+    if (supabase) {
+      try {
+        await supabase.from('settings').upsert({
+          key: 'duties',
+          value: JSON.stringify(db.getDuties())
+        });
+      } catch (e) {
+        console.warn('Could not sync duties to Supabase:', e.message);
+      }
+    }
+    if (req.headers['content-type']?.includes('application/json')) {
+      return res.json({ success: !!updated, duty: updated, message: 'कर्तव्य सफलतापूर्वक अपडेट कर दिया गया!' });
+    }
+    res.redirect('/admin?tab=duties&saved=1');
+  } catch (err) {
+    console.error('Error updating duty:', err);
+    res.redirect('/admin?tab=duties&error=1');
+  }
+});
+
+app.post('/api/duties/:num/delete', requireAdmin, async (req, res) => {
+  try {
+    const deleted = db.deleteDuty(req.params.num);
+    if (supabase) {
+      try {
+        await supabase.from('settings').upsert({
+          key: 'duties',
+          value: JSON.stringify(db.getDuties())
+        });
+      } catch (e) {
+        console.warn('Could not sync duties to Supabase:', e.message);
+      }
+    }
+    if (req.headers['content-type']?.includes('application/json')) {
+      return res.json({ success: deleted, message: 'कर्तव्य सफलतापूर्वक हटा दिया गया!' });
+    }
+    res.redirect('/admin?tab=duties&saved=1');
+  } catch (err) {
+    console.error('Error deleting duty:', err);
+    res.redirect('/admin?tab=duties&error=1');
+  }
+});
+
+// CSV export for works removed/disabled as requested - redirects to public works page
+app.get('/api/export/works.csv', (req, res) => {
+  res.redirect('/works');
 });
 
 // 404 Handler

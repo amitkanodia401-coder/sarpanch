@@ -772,6 +772,17 @@ function setSetting(key, val) {
   stmt.run([key, JSON.stringify(val)]);
   stmt.free();
   saveSqlToFile();
+
+  try {
+    if (fs.existsSync(jsonSeedPath)) {
+      const jData = JSON.parse(fs.readFileSync(jsonSeedPath, 'utf8'));
+      jData[key] = val;
+      fs.writeFileSync(jsonSeedPath, JSON.stringify(jData, null, 2), 'utf8');
+    }
+  } catch (e) {
+    // Non-fatal if json seed file cannot be written
+  }
+
   return val;
 }
 
@@ -808,7 +819,78 @@ function getStats() {
 }
 
 function getDuties() {
-  return getSetting('duties', []);
+  const duties = getSetting('duties', null);
+  if (Array.isArray(duties) && duties.length > 0) {
+    return duties;
+  }
+  // Fallback to jsonSeedPath duties if settings table has empty
+  try {
+    if (fs.existsSync(jsonSeedPath)) {
+      const jData = JSON.parse(fs.readFileSync(jsonSeedPath, 'utf8'));
+      if (Array.isArray(jData.duties) && jData.duties.length > 0) {
+        setSetting('duties', jData.duties);
+        return jData.duties;
+      }
+    }
+  } catch (e) {}
+  return [];
+}
+
+function addDuty(dutyData) {
+  ensureDb();
+  const duties = getDuties();
+  const nextNum = duties.length > 0
+    ? (Math.max(...duties.map(d => Number(d.num) || 0)) + 1).toString()
+    : '1';
+
+  const newDuty = {
+    num: nextNum,
+    title: (dutyData.title || '').trim(),
+    summary: (dutyData.summary || '').trim(),
+    details: (dutyData.details || dutyData.desc || '').trim(),
+    color: dutyData.color || '#108e5e',
+    icon: dutyData.icon || 'fa-list-check'
+  };
+
+  duties.push(newDuty);
+  setSetting('duties', duties);
+  return newDuty;
+}
+
+function updateDuty(num, dutyData) {
+  ensureDb();
+  const duties = getDuties();
+  const idx = duties.findIndex(d => String(d.num) === String(num));
+  if (idx === -1) return null;
+
+  duties[idx] = {
+    ...duties[idx],
+    title: dutyData.title !== undefined ? dutyData.title.trim() : duties[idx].title,
+    summary: dutyData.summary !== undefined ? dutyData.summary.trim() : duties[idx].summary,
+    details: dutyData.details !== undefined ? dutyData.details.trim() : (dutyData.desc !== undefined ? dutyData.desc.trim() : duties[idx].details),
+    color: dutyData.color || duties[idx].color || '#108e5e',
+    icon: dutyData.icon || duties[idx].icon || 'fa-list-check'
+  };
+
+  setSetting('duties', duties);
+  return duties[idx];
+}
+
+function deleteDuty(num) {
+  ensureDb();
+  let duties = getDuties();
+  const initialLen = duties.length;
+  duties = duties.filter(d => String(d.num) !== String(num));
+  if (duties.length === initialLen) return false;
+
+  // Re-number sequentially
+  duties = duties.map((d, index) => ({
+    ...d,
+    num: String(index + 1)
+  }));
+
+  setSetting('duties', duties);
+  return true;
 }
 
 function getActivities() {
@@ -908,6 +990,9 @@ module.exports = {
   updateGramSabha,
   getStats,
   getDuties,
+  addDuty,
+  updateDuty,
+  deleteDuty,
   getActivities,
   getSetting,
   setSetting

@@ -767,11 +767,8 @@
             <p style="font-size: 13px; color: #64748b;">सरकारी ऑडिट एवं ग्राम सभा हेतु प्रमाणित डेटा प्रारूप</p>
           </div>
           <div class="reports-buttons">
-            <a href="/api/export/works.csv" class="btn btn-outline btn-sm">
-              <i class="fa-solid fa-file-csv" style="color: #108e5e;"></i> विकास कार्य रिपोर्ट (CSV)
-            </a>
             <button onclick="window.print()" class="btn btn-outline btn-sm">
-              <i class="fa-solid fa-file-pdf" style="color: #ef4444;"></i> वित्तीय रिपोर्ट (PDF)
+              <i class="fa-solid fa-print" style="color: #108e5e;"></i> विकास कार्य रिपोर्ट प्रिंट / PDF
             </button>
           </div>
         </div>
@@ -781,57 +778,73 @@
            TAB 4: सरपंच के कर्तव्य (Screen 6 - Future Plan)
            ==================================================== -->
       <section id="section-duties" class="admin-tab-section <%= activeTab === 'duties' ? 'active' : '' %>">
-        <div style="text-align: center; max-width: 760px; margin: 0 auto 36px;">
-          <span class="party-badge bjp" style="margin-bottom: 8px;">स्क्रीन 6 (भविष्य योजना)</span>
-          <h2 style="font-size: 28px; font-weight: 800; color: #1e293b;">सरपंच को क्या-क्या करना चाहिए?</h2>
-          <p style="font-size: 15px; color: #64748b;">गाँव के समग्र विकास के लिए आने वाले समय में ये 5 मुख्य कार्य करने आवश्यक हैं:</p>
+        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+          <div>
+            <h2 style="font-size: 22px; font-weight: 800; color: #1e293b;">📋 सरपंच के कर्तव्य व भविष्य योजना प्रबंधन</h2>
+            <p style="font-size: 13.5px; color: #64748b;">"सरपंच को क्या-क्या करना चाहिए?" - यहाँ से नए कर्तव्य जोड़ें, संपादित करें या हटाएं। वेबसाइट पर तुरंत लाइव दिखेंगे।</p>
+          </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <a href="/duties" target="_blank" class="btn btn-outline btn-sm">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> सार्वजनिक पेज देखें
+            </a>
+            <button type="button" onclick="openAdminModal('addDutyModal')" class="btn btn-primary btn-sm">
+              <i class="fa-solid fa-plus"></i> नया कर्तव्य जोड़ें
+            </button>
+          </div>
         </div>
 
         <div class="duties-list" style="margin-bottom: 40px;">
-          <div class="duty-card">
-            <div class="duty-num" style="background: #0ea5e9;">1</div>
-            <div class="duty-content">
-              <h3>बुनियादी सुविधाएं</h3>
-              <p class="duty-summary" style="color: #0284c7;">• सड़क, पानी, बिजली, नाली की व्यवस्था</p>
-              <p class="duty-desc">हर घर तक पक्की सड़क, 24 घंटे निर्बाध बिजली, नल से स्वच्छ पेयजल और जल निकासी की व्यवस्था करना।</p>
+          <% if (locals.duties && duties.length > 0) { %>
+            <% duties.forEach((duty, idx) => { %>
+              <div class="duty-card" style="display: flex; align-items: flex-start; gap: 16px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 16px;">
+                <div class="duty-num" style="background: <%= duty.color || '#108e5e' %>; color: #fff; width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; flex-shrink: 0;">
+                  <%= duty.num || (idx + 1) %>
+                </div>
+                <div class="duty-content" style="flex: 1;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+                    <div>
+                      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                        <% if (duty.icon) { %>
+                          <i class="fa-solid <%= duty.icon %>" style="color: <%= duty.color || '#108e5e' %>; font-size: 16px;"></i>
+                        <% } %>
+                        <h3 style="font-size: 18px; font-weight: 700; color: #1e293b; margin: 0;"><%= duty.title %></h3>
+                      </div>
+                      <% if (duty.summary) { %>
+                        <p class="duty-summary" style="color: <%= duty.color || '#108e5e' %>; font-size: 13.5px; font-weight: 600; margin: 4px 0 8px;"><%= duty.summary %></p>
+                      <% } %>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                      <button type="button" class="btn btn-outline btn-sm" onclick="editDuty(this)"
+                        data-num="<%= duty.num || (idx + 1) %>"
+                        data-title="<%= duty.title %>"
+                        data-summary="<%= duty.summary || '' %>"
+                        data-details="<%= duty.details || duty.desc || '' %>"
+                        data-color="<%= duty.color || '#108e5e' %>"
+                        data-icon="<%= duty.icon || 'fa-list-check' %>"
+                        style="padding: 5px 12px; font-size: 12.5px;">
+                        <i class="fa-solid fa-pen-to-square"></i> संपादित करें
+                      </button>
+                      <button type="button" class="btn btn-sm" onclick="deleteDuty('<%= duty.num || (idx + 1) %>', '<%= duty.title.replace(/'/g, "\\'") %>')" style="background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 5px 12px; font-size: 12.5px;">
+                        <i class="fa-solid fa-trash"></i> हटाएं
+                      </button>
+                    </div>
+                  </div>
+                  <p class="duty-desc" style="font-size: 14px; color: #475569; margin: 8px 0 0; line-height: 1.6;">
+                    <%= duty.details || duty.desc || '' %>
+                  </p>
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <div style="text-align: center; padding: 48px; background: #fff; border-radius: 12px; border: 2px dashed #cbd5e1;">
+              <i class="fa-solid fa-clipboard-list" style="font-size: 40px; color: #94a3b8; margin-bottom: 12px;"></i>
+              <h4 style="color: #1e293b; margin-bottom: 6px;">अभी कोई कर्तव्य नहीं है</h4>
+              <p style="color: #64748b; font-size: 14px; margin-bottom: 16px;">सरपंच को क्या-क्या करना चाहिए, नया कर्तव्य जोड़ने के लिए ऊपर दिए गए बटन पर क्लिक करें।</p>
+              <button onclick="openAdminModal('addDutyModal')" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-plus"></i> नया कर्तव्य जोड़ें
+              </button>
             </div>
-          </div>
-
-          <div class="duty-card">
-            <div class="duty-num" style="background: #10b981;">2</div>
-            <div class="duty-content">
-              <h3>शिक्षा और स्वास्थ्य</h3>
-              <p class="duty-summary" style="color: #059669;">• विद्यालयों का सुधार • स्वास्थ्य केंद्र और नियमित टीकाकरण</p>
-              <p class="duty-desc">गाँव के स्कूलों में आधुनिक डिजिटल क्लासरूम, लाइब्रेरी एवं प्राथमिक स्वास्थ्य केंद्र में 24 घंटे डॉक्टर की उपलब्धता।</p>
-            </div>
-          </div>
-
-          <div class="duty-card">
-            <div class="duty-num" style="background: #f59e0b;">3</div>
-            <div class="duty-content">
-              <h3>कृषि और रोजगार</h3>
-              <p class="duty-summary" style="color: #d97706;">• किसानों के लिए योजनाएं • रोजगार के नए अवसर</p>
-              <p class="duty-desc">समय पर खाद-बीज उपलब्धता, पीएम किसान सम्मान निधि, सिंचाई की सुविधा और मनरेगा में पारदर्शी मजदूरी भुगतान।</p>
-            </div>
-          </div>
-
-          <div class="duty-card">
-            <div class="duty-num" style="background: #8b5cf6;">4</div>
-            <div class="duty-content">
-              <h3>सामाजिक न्याय</h3>
-              <p class="duty-summary" style="color: #7c3aed;">• सभी वर्गों के लिए समान अवसर • महिला/बुजुर्ग योजनाएं</p>
-              <p class="duty-desc">पेंशन योजनाओं का समय पर भुगतान, आवास योजना में निष्पक्षता, महिला स्वावलंबन और बिना भेदभाव के न्याय।</p>
-            </div>
-          </div>
-
-          <div class="duty-card">
-            <div class="duty-num" style="background: #06b6d4;">5</div>
-            <div class="duty-content">
-              <h3>डिजिटल और पारदर्शिता</h3>
-              <p class="duty-summary" style="color: #0891b2;">• ऑनलाइन शिकायतें, राशन, पेंशन • सभी जानकारी पारदर्शी करना</p>
-              <p class="duty-desc">पंचायत निधि के हर रुपये का खुला ऑडिट और घर बैठे सरकारी प्रमाण पत्र व शिकायत निवारण की ऑनलाइन सुविधा।</p>
-            </div>
-          </div>
+          <% } %>
         </div>
 
         <div class="duty-pledge-banner">
@@ -1118,9 +1131,37 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <label>पोर्टल स्लोगन</label>
-              <input type="text" name="slogan" class="form-control" value="<%= villageInfo.slogan %>">
+            <div class="form-row">
+              <div class="form-group">
+                <label>पोर्टल स्लोगन</label>
+                <input type="text" name="slogan" class="form-control" value="<%= villageInfo.slogan %>">
+              </div>
+              <div class="form-group">
+                <label>होम पेज टैगलाइन (Hero Tag)</label>
+                <input type="text" name="heroTag" class="form-control" value="<%= villageInfo.heroTag || 'विकास भी विश्वास भी' %>">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>होम पेज मुख्य शीर्षक (Hero Title)</label>
+                <input type="text" name="heroTitle" class="form-control" value="<%= villageInfo.heroTitle || 'मेरा गाँव, <br>मेरा भविष्य' %>">
+              </div>
+              <div class="form-group">
+                <label>होम पेज मुख्य बिंदु (Hero Bullets - बीच में • लगाएं)</label>
+                <input type="text" name="heroSubtitle" class="form-control" value="<%= villageInfo.heroSubtitle || 'पारदर्शी पंचायत • बेहतर विकास • समृद्ध गांव' %>">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>गाँव परिचय फोटो लिंक (Showcase Image URL)</label>
+                <input type="text" name="showcaseImage" class="form-control" value="<%= villageInfo.showcaseImage || 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&h=500&fit=crop' %>">
+              </div>
+              <div class="form-group">
+                <label>कर्तव्य पेज उप-शीर्षक (Duties Subtitle)</label>
+                <input type="text" name="dutiesSubtitle" class="form-control" value="<%= villageInfo.dutiesSubtitle || 'गाँव के समग्र विकास और खुशहाली के लिए आने वाले समय में ये मुख्य स्तंभ मजबूत करने अनिवार्य हैं:' %>">
+              </div>
             </div>
 
             <div class="form-group">
@@ -1346,11 +1387,11 @@
           <strong>विवरण:</strong> <span id="modalWorkDesc"></span>
         </div>
 
-        <div style="display: flex; justify-content: space-between; gap: 12px;">
-          <a href="/api/export/works.csv" class="btn btn-primary btn-sm">
-            <i class="fa-solid fa-file-arrow-down"></i> संबंधित दस्तावेज डाउनलोड करें
-          </a>
-          <button onclick="closeAdminModal('workDetailModal')" class="btn btn-outline btn-sm">
+        <div style="display: flex; justify-content: flex-end; gap: 12px;">
+          <button onclick="window.print()" class="btn btn-outline btn-sm">
+            <i class="fa-solid fa-print"></i> प्रिंट करें
+          </button>
+          <button onclick="closeAdminModal('workDetailModal')" class="btn btn-primary btn-sm">
             बंद करें
           </button>
         </div>
@@ -1864,9 +1905,160 @@
     </div>
   </div>
 
+  <!-- Modal: नया कर्तव्य जोड़ें (Add Duty) -->
+  <div id="addDutyModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3>📋 नया सरपंच कर्तव्य जोड़ें</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('addDutyModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form action="/api/duties/add" method="POST">
+          <div class="form-group">
+            <label>कर्तव्य का शीर्षक *</label>
+            <input type="text" name="title" class="form-control" placeholder="उदा. बुनियादी सुविधाएं / आधुनिक डिजिटल शिक्षा" required>
+          </div>
+          <div class="form-group">
+            <label>मुख्य बिंदु (संक्षिप्त विवरण)</label>
+            <input type="text" name="summary" class="form-control" placeholder="उदा. • सड़क, पानी, बिजली, नाली की व्यवस्था">
+          </div>
+          <div class="form-group">
+            <label>विस्तृत ब्यौरा एवं कार्ययोजना *</label>
+            <textarea name="details" class="form-control" rows="3" placeholder="गाँव के विकास के लिए इस स्तंभ के अंतर्गत क्या-क्या कार्य किए जाएंगे..." required></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>रंग थीम (Color)</label>
+              <select name="color" class="form-control">
+                <option value="#0ea5e9" selected>नीला (Sky Blue)</option>
+                <option value="#10b981">हरा (Emerald Green)</option>
+                <option value="#f59e0b">केसरिया / पीला (Amber)</option>
+                <option value="#8b5cf6">बैंगनी (Purple)</option>
+                <option value="#06b6d4">सियान (Cyan)</option>
+                <option value="#e11d48">गुलाबी / लाल (Rose)</option>
+                <option value="#108e5e">गहरा हरा (Panchayat Green)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>आइकन (FontAwesome Icon)</label>
+              <select name="icon" class="form-control">
+                <option value="fa-road" selected>सड़क / मार्ग (fa-road)</option>
+                <option value="fa-heart-pulse">स्वास्थ्य / चिकित्सा (fa-heart-pulse)</option>
+                <option value="fa-seedling">कृषि / किसान (fa-seedling)</option>
+                <option value="fa-scale-balanced">सामाजिक न्याय (fa-scale-balanced)</option>
+                <option value="fa-laptop">डिजिटल / ऑनलाइन (fa-laptop)</option>
+                <option value="fa-school">शिक्षा / विद्यालय (fa-school)</option>
+                <option value="fa-lightbulb">बिजली / प्रकाश (fa-lightbulb)</option>
+                <option value="fa-faucet-drip">पेयजल / नल (fa-faucet-drip)</option>
+                <option value="fa-tree">पर्यावरण / हरियाली (fa-tree)</option>
+                <option value="fa-shield-halved">सुरक्षा / न्याय (fa-shield-halved)</option>
+                <option value="fa-users">सामुदायिक (fa-users)</option>
+                <option value="fa-list-check">योजना / सूची (fa-list-check)</option>
+              </select>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button type="button" onclick="closeAdminModal('addDutyModal')" class="btn btn-outline">रद्द करें</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-plus"></i> कर्तव्य जोड़ें</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: कर्तव्य संपादित करें (Edit Duty) -->
+  <div id="editDutyModal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 580px;">
+      <div class="modal-header">
+        <h3>✏️ कर्तव्य संपादित करें</h3>
+        <button class="modal-close-btn" onclick="closeAdminModal('editDutyModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editDutyForm" method="POST">
+          <div class="form-group">
+            <label>कर्तव्य का शीर्षक *</label>
+            <input type="text" id="editDutyTitle" name="title" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label>मुख्य बिंदु (संक्षिप्त विवरण)</label>
+            <input type="text" id="editDutySummary" name="summary" class="form-control">
+          </div>
+          <div class="form-group">
+            <label>विस्तृत ब्यौरा एवं कार्ययोजना *</label>
+            <textarea id="editDutyDetails" name="details" class="form-control" rows="3" required></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>रंग थीम (Color)</label>
+              <select id="editDutyColor" name="color" class="form-control">
+                <option value="#0ea5e9">नीला (Sky Blue)</option>
+                <option value="#10b981">हरा (Emerald Green)</option>
+                <option value="#f59e0b">केसरिया / पीला (Amber)</option>
+                <option value="#8b5cf6">बैंगनी (Purple)</option>
+                <option value="#06b6d4">सियान (Cyan)</option>
+                <option value="#e11d48">गुलाबी / लाल (Rose)</option>
+                <option value="#108e5e">गहरा हरा (Panchayat Green)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>आइकन (FontAwesome Icon)</label>
+              <select id="editDutyIcon" name="icon" class="form-control">
+                <option value="fa-road">सड़क / मार्ग (fa-road)</option>
+                <option value="fa-heart-pulse">स्वास्थ्य / चिकित्सा (fa-heart-pulse)</option>
+                <option value="fa-seedling">कृषि / किसान (fa-seedling)</option>
+                <option value="fa-scale-balanced">सामाजिक न्याय (fa-scale-balanced)</option>
+                <option value="fa-laptop">डिजिटल / ऑनलाइन (fa-laptop)</option>
+                <option value="fa-school">शिक्षा / विद्यालय (fa-school)</option>
+                <option value="fa-lightbulb">बिजली / प्रकाश (fa-lightbulb)</option>
+                <option value="fa-faucet-drip">पेयजल / नल (fa-faucet-drip)</option>
+                <option value="fa-tree">पर्यावरण / हरियाली (fa-tree)</option>
+                <option value="fa-shield-halved">सुरक्षा / न्याय (fa-shield-halved)</option>
+                <option value="fa-users">सामुदायिक (fa-users)</option>
+                <option value="fa-list-check">योजना / सूची (fa-list-check)</option>
+              </select>
+            </div>
+          </div>
+          <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+            <button type="button" onclick="closeAdminModal('editDutyModal')" class="btn btn-outline">रद्द करें</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> परिवर्तन सहेजें</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <script src="/js/admin.js"></script>
   <script src="/js/main.js"></script>
   <script>
+    function editDuty(btn) {
+      const num = btn.getAttribute('data-num');
+      const title = btn.getAttribute('data-title');
+      const summary = btn.getAttribute('data-summary');
+      const details = btn.getAttribute('data-details');
+      const color = btn.getAttribute('data-color');
+      const icon = btn.getAttribute('data-icon');
+
+      const form = document.getElementById('editDutyForm');
+      if (!form) return;
+      form.action = '/api/duties/' + encodeURIComponent(num) + '/edit';
+      document.getElementById('editDutyTitle').value = title || '';
+      document.getElementById('editDutySummary').value = summary || '';
+      document.getElementById('editDutyDetails').value = details || '';
+      if (document.getElementById('editDutyColor')) document.getElementById('editDutyColor').value = color || '#108e5e';
+      if (document.getElementById('editDutyIcon')) document.getElementById('editDutyIcon').value = icon || 'fa-list-check';
+
+      openAdminModal('editDutyModal');
+    }
+
+    function deleteDuty(num, title) {
+      if (confirm('क्या आप वाकई कर्तव्य "' + title + '" को हटाना चाहते हैं?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/api/duties/' + encodeURIComponent(num) + '/delete';
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
     
     function filterVoteLogs() {
       const search = (document.getElementById('voteSearchInput')?.value || '').toLowerCase().trim();
